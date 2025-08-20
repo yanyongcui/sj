@@ -1,0 +1,3637 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>产品利润分析专业版</title>
+    <!-- SheetJS 库用于解析 Excel 文件 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            /* 主色系 */
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --primary-light: #dbeafe;
+            
+            /* 语义色彩 */
+            --success-color: #059669;
+            --success-light: #d1fae5;
+            --danger-color: #dc2626;
+            --danger-light: #fee2e2;
+            --warning-color: #d97706;
+            --warning-light: #fef3c7;
+            
+            /* 中性色 */
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            
+            /* 布局 */
+            --header-height: 64px;
+            --sidebar-width: 280px;
+            --border-radius: 8px;
+            --border-radius-lg: 12px;
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            
+            /* 字体 */
+            --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--gray-50);
+            color: var(--gray-900);
+            line-height: 1.6;
+        }
+
+        /* 顶部导航栏 */
+        .navbar {
+            height: var(--header-height);
+            background: white;
+            border-bottom: 1px solid var(--gray-200);
+            box-shadow: var(--shadow);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 20px;
+            color: var(--primary-color);
+        }
+
+        .navbar-brand-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--primary-color);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .navbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background: var(--gray-200);
+            color: var(--gray-700);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-300);
+        }
+
+        .btn-icon {
+            padding: 8px;
+            width: 40px;
+            height: 40px;
+            justify-content: center;
+        }
+
+        /* 主布局 */
+        .main-layout {
+            margin-top: var(--header-height);
+            display: flex;
+            min-height: calc(100vh - var(--header-height));
+        }
+
+        /* 侧边栏 */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: white;
+            border-right: 1px solid var(--gray-200);
+            overflow-y: auto;
+        }
+
+        .sidebar-section {
+            padding: 24px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .sidebar-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--gray-700);
+            margin-bottom: 6px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--border-radius);
+            font-size: 14px;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .input-group .form-input {
+            flex: 1;
+        }
+
+        .input-addon {
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            background: var(--gray-100);
+            border: 1px solid var(--gray-300);
+            border-radius: var(--border-radius);
+            font-size: 14px;
+            color: var(--gray-600);
+        }
+
+        /* 产品列表 */
+        .product-list {
+            padding: 16px 24px;
+        }
+
+        .product-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .product-card {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--border-radius);
+            padding: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .product-card:hover {
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow);
+        }
+
+        .product-card.active {
+            border-color: var(--primary-color);
+            background: var(--primary-light);
+        }
+
+        .product-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .product-name {
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .product-status {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-profit {
+            background: var(--success-light);
+            color: var(--success-color);
+        }
+
+        .status-loss {
+            background: var(--danger-light);
+            color: var(--danger-color);
+        }
+
+        .product-metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--gray-600);
+        }
+
+        /* 主内容区 */
+        .main-content {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .content-header {
+            background: white;
+            border-bottom: 1px solid var(--gray-200);
+            padding: 24px;
+        }
+
+        .content-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 8px;
+        }
+
+        .content-subtitle {
+            color: var(--gray-600);
+            margin-bottom: 16px;
+        }
+
+        .content-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        /* 数据表格 */
+        .table-container {
+            flex: 1;
+            overflow: hidden;
+            padding: 24px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .data-table {
+            width: 100%;
+            background: white;
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            max-height: fit-content;
+        }
+
+        /* 表格滚动容器 */
+        .table-scroll-container {
+            overflow-x: auto;
+            overflow-y: visible;
+            position: relative;
+            max-height: fit-content;
+        }
+
+        /* 固定首列的表格布局 */
+        .table-wrapper {
+            display: flex;
+            min-width: 2100px;
+        }
+
+        /* 固定列（产品名称） */
+        .fixed-column {
+            width: 170px;
+            min-width: 170px;
+            background: white;
+            border-right: 2px solid var(--primary-color);
+            z-index: 20;
+            position: sticky;
+            left: 0;
+            box-shadow: 2px 0 4px rgba(0,0,0,0.1);
+        }
+
+        /* 可滚动列 */
+        .scrollable-columns {
+            flex: 1;
+            min-width: 1950px;
+        }
+
+        /* 自定义滚动条样式 */
+        .table-scroll-container::-webkit-scrollbar {
+            width: 16px;
+            height: 16px;
+        }
+
+        .table-scroll-container::-webkit-scrollbar-track {
+            background: var(--gray-100);
+            border-radius: 8px;
+        }
+
+        .table-scroll-container::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 8px;
+            border: 2px solid var(--gray-100);
+        }
+
+        .table-scroll-container::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-hover);
+        }
+
+        .table-scroll-container::-webkit-scrollbar-corner {
+            background: var(--gray-100);
+        }
+        
+        /* 强制显示滚动条 */
+        .table-scroll-container {
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary-color) var(--gray-100);
+        }
+
+        /* 滚动条提示 */
+        .scroll-hint {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: var(--primary-color);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            z-index: 30;
+            opacity: 0.9;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .scroll-hint.hidden {
+            opacity: 0;
+        }
+
+        .table-header {
+            background: var(--gray-50);
+            border-bottom: 1px solid var(--gray-200);
+            height: 60px;
+            min-height: 60px;
+        }
+
+        .table-row {
+            display: grid;
+            grid-template-columns: 
+                100px /* 推广预算 */
+                120px /* 推广实际利润 */
+                120px /* 每单实际利润 */
+                120px /* 成交每单成本 */
+                120px /* 推广销售单数 */
+                120px /* 推广销售额 */
+                100px /* 商城扣点 */
+                100px /* 运费占比 */
+                100px /* 每单运费 */
+                100px /* 人员开销 */
+                100px /* 产品售价 */
+                100px /* 产品成本 */
+                100px /* 点击单价 */
+                100px /* 转化率 */
+                100px /* 投产比 */
+                100px /* 客单价 */
+                120px /* 实际利润率 */
+                120px /* 售价利润率 */
+                120px /* 保本利润率 */
+                100px /* 涨价保本 */
+                100px /* 降本保本 */
+                80px; /* 操作 */
+            gap: 1px;
+            background: var(--gray-200);
+            height: 60px;
+            min-height: 60px;
+        }
+        
+        .fixed-column .table-row {
+            display: block;
+            height: 60px;
+            min-height: 60px;
+        }
+        
+        .fixed-column .table-cell {
+            width: 100%;
+            border-right: none;
+        }
+
+        .table-cell {
+            background: white;
+            padding: 12px 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 60px;
+            box-sizing: border-box;
+        }
+        
+        /* 固定列单元格样式 */
+        .fixed-column .table-cell {
+            height: 60px;
+            min-height: 60px;
+            max-height: 60px;
+            padding: 8px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        
+        /* 滚动列单元格样式 */
+        .scrollable-columns .table-cell {
+            height: 60px;
+            min-height: 60px;
+            max-height: 60px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .table-header .table-cell {
+            background: var(--gray-50);
+            font-weight: 600;
+            color: var(--gray-700);
+            font-size: 12px;
+            text-align: center;
+            height: 60px;
+            min-height: 60px;
+            max-height: 60px;
+        }
+        
+        .table-cell.sortable {
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.2s ease;
+        }
+        
+        .table-cell.sortable:hover {
+            background: var(--gray-200);
+        }
+        
+        .sort-icon {
+            margin-left: 4px;
+            font-size: 10px;
+            color: var(--gray-400);
+        }
+        
+        .sort-icon.active {
+            color: var(--primary-color);
+        }
+
+        .cell-label {
+            font-size: 10px;
+            color: var(--gray-500);
+            margin-bottom: 4px;
+            text-align: center;
+        }
+
+        .cell-input {
+            width: 100%;
+            padding: 4px 6px;
+            border: 1px solid var(--gray-300);
+            border-radius: 4px;
+            font-size: 12px;
+            text-align: center;
+            box-sizing: border-box;
+            height: 26px;
+        }
+
+        .cell-input:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+
+        .cell-value {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 6px;
+            border-radius: 4px;
+            text-align: center;
+            min-width: 60px;
+        }
+
+        .cell-value.positive {
+            background: var(--success-light);
+            color: var(--success-color);
+        }
+
+        .cell-value.negative {
+            background: var(--danger-light);
+            color: var(--danger-color);
+        }
+
+        .cell-value.neutral {
+            background: var(--gray-100);
+            color: var(--gray-600);
+        }
+
+        /* 选中行高亮样式 */
+        .table-row-selected {
+            background: var(--primary-light) !important;
+        }
+        
+        .table-row-selected .table-cell {
+            background: var(--primary-light) !important;
+            border-left: 3px solid var(--primary-color);
+            transition: all 0.3s ease;
+        }
+        
+        .table-row-selected .cell-input {
+            background: rgba(255, 255, 255, 0.9);
+            border-color: var(--primary-color);
+        }
+        
+        .table-row-selected .cell-value {
+            font-weight: 600;
+            box-shadow: 0 1px 3px rgba(37, 99, 235, 0.1);
+        }
+        
+        /* 固定列选中样式 */
+        .fixed-row-selected {
+            background: var(--primary-light) !important;
+            border-left: 4px solid var(--primary-color);
+            transition: all 0.3s ease;
+        }
+        
+        .fixed-row-selected .cell-input {
+            background: rgba(255, 255, 255, 0.9);
+            border-color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        /* 单选产品高亮样式（与多选不同的颜色） */
+        .table-row-active {
+            background: var(--warning-light) !important;
+        }
+        
+        .table-row-active .table-cell {
+            background: var(--warning-light) !important;
+            border-left: 3px solid var(--warning-color);
+            transition: all 0.3s ease;
+        }
+        
+        .table-row-active .cell-input {
+            background: rgba(255, 255, 255, 0.9);
+            border-color: var(--warning-color);
+        }
+        
+        .table-row-active .cell-value {
+            font-weight: 600;
+            box-shadow: 0 1px 3px rgba(215, 119, 6, 0.1);
+        }
+        
+        /* 固定列单选样式 */
+        .fixed-row-active {
+            background: var(--warning-light) !important;
+            border-left: 4px solid var(--warning-color);
+            transition: all 0.3s ease;
+        }
+        
+        .fixed-row-active .cell-input {
+            background: rgba(255, 255, 255, 0.9);
+            border-color: var(--warning-color);
+            font-weight: 600;
+        }
+
+        /* 工具提示样式 */
+        .tooltip {
+            position: relative;
+            cursor: help;
+        }
+        
+        .tooltip::before {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--gray-800);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            line-height: 1.4;
+            white-space: pre-line;
+            min-width: 200px;
+            max-width: 350px;
+            text-align: left;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .tooltip::after {
+            content: '';
+            position: absolute;
+            bottom: 117%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: var(--gray-800);
+            z-index: 1001;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        
+        .tooltip:hover::before,
+        .tooltip:hover::after {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        /* 确保tooltip在表格中正确显示 */
+        .table-cell .tooltip::before {
+            bottom: 130%;
+            z-index: 1000;
+        }
+        
+        .table-cell .tooltip::after {
+            bottom: 122%;
+            z-index: 1001;
+        }
+
+        /* 统计面板 */
+        .stats-panel {
+            background: white;
+            border-top: 1px solid var(--gray-200);
+            padding: 24px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 24px;
+        }
+
+        .stat-card {
+            background: var(--gray-50);
+            border-radius: var(--border-radius-lg);
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--gray-600);
+            margin-bottom: 4px;
+        }
+
+        .stat-change {
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .stat-change.positive {
+            color: var(--success-color);
+        }
+
+        .stat-change.negative {
+            color: var(--danger-color);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .sidebar {
+                width: 240px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -280px;
+                top: var(--header-height);
+                height: calc(100vh - var(--header-height));
+                z-index: 999;
+                transition: left 0.3s ease;
+            }
+
+            .sidebar.open {
+                left: 0;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .table-row {
+                grid-template-columns: 1fr;
+                gap: 0;
+            }
+
+            .table-cell {
+                border-bottom: 1px solid var(--gray-200);
+            }
+        }
+
+        /* 动画效果 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* 图表容器 */
+        .chart-container {
+            height: 300px;
+            margin-top: 20px;
+            background: white;
+            border-radius: var(--border-radius-lg);
+            padding: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        /* 浮动操作按钮 */
+        .fab {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 56px;
+            height: 56px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            box-shadow: var(--shadow-lg);
+            cursor: pointer;
+            font-size: 24px;
+            transition: all 0.2s ease;
+        }
+
+        .fab:hover {
+            background: var(--primary-hover);
+            transform: scale(1.1);
+        }
+
+        /* 模态框样式 */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-lg);
+            max-width: 800px;
+            max-height: 80vh;
+            width: 90%;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: var(--gray-900);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--gray-500);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+        }
+
+        .modal-close:hover {
+            background: var(--gray-100);
+            color: var(--gray-700);
+        }
+
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .modal-footer {
+            padding: 24px;
+            border-top: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .import-step {
+            margin-bottom: 24px;
+        }
+
+        .import-step h4 {
+            color: var(--primary-color);
+            margin-bottom: 8px;
+        }
+
+        .import-step p {
+            color: var(--gray-600);
+            margin-bottom: 16px;
+        }
+
+        .file-drop-zone {
+            border: 2px dashed var(--gray-300);
+            border-radius: var(--border-radius);
+            padding: 40px 20px;
+            text-align: center;
+            color: var(--gray-500);
+            margin-top: 16px;
+            transition: border-color 0.2s ease;
+        }
+
+        .file-drop-zone:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .file-drop-zone.drag-over {
+            border-color: var(--primary-color);
+            background: var(--primary-light);
+        }
+
+        .field-mapping {
+            display: grid;
+            gap: 16px;
+        }
+
+        .field-map-item {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 16px;
+            align-items: center;
+            padding: 16px;
+            background: var(--gray-50);
+            border-radius: var(--border-radius);
+        }
+
+        .field-source {
+            text-align: right;
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+
+        .field-arrow {
+            color: var(--primary-color);
+            font-size: 18px;
+        }
+
+        .field-target {
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+
+        .data-preview {
+            max-height: 300px;
+            overflow: auto;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--border-radius);
+        }
+
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .preview-table th,
+        .preview-table td {
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-200);
+            font-size: 12px;
+        }
+
+        .preview-table th {
+            background: var(--gray-50);
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        .preview-table tr:hover {
+            background: var(--gray-50);
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <nav class="navbar">
+        <div class="navbar-brand">
+            <div class="navbar-brand-icon">P</div>
+            <span>产品利润分析专业版</span>
+        </div>
+        <div class="navbar-actions">
+            <button class="btn btn-secondary btn-icon" onclick="toggleTheme()" title="切换主题">🌙</button>
+            <button class="btn btn-secondary" onclick="exportData()">
+                📊 导出报告
+            </button>
+            <button class="btn btn-primary" onclick="addProduct()">
+                ➕ 添加产品
+            </button>
+        </div>
+    </nav>
+
+    <!-- 主布局 -->
+    <div class="main-layout">
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <!-- 全局设置 -->
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">🌐 全局设置</h3>
+                
+                <div class="form-group">
+                    <label class="form-label">推广预算总额</label>
+                    <div class="input-group">
+                        <input type="number" class="form-input" id="globalPromotionBudget" 
+                               placeholder="0.00" step="0.01" onchange="updateGlobalBudget()">
+                        <span class="input-addon">¥</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">预算分配方式</label>
+                    <select class="form-input" id="budgetAllocation" onchange="updateBudgetAllocation()">
+                        <option value="each_full">每店推广预算总额</option>
+                        <option value="equal">平均分配</option>
+                        <option value="weighted">按权重分配</option>
+                        <option value="manual">手动分配</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 默认参数 -->
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">⚙️ 默认参数</h3>
+                
+                <div class="form-group">
+                    <label class="form-label">商城扣点</label>
+                    <div class="input-group">
+                        <input type="number" class="form-input" id="defaultPlatformFee" 
+                               value="8.0" step="0.1" onchange="updateDefaultParams()">
+                        <span class="input-addon">%</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">运费占比</label>
+                    <div class="input-group">
+                        <input type="number" class="form-input" id="defaultShippingRate" 
+                               value="7.0" step="0.1" onchange="updateDefaultParams()">
+                        <span class="input-addon">%</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">人员开销</label>
+                    <div class="input-group">
+                        <input type="number" class="form-input" id="defaultLaborCost" 
+                               value="5.0" step="0.1" onchange="updateDefaultParams()">
+                        <span class="input-addon">%</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">国补优惠系数</label>
+                    <div class="input-group">
+                        <input type="number" class="form-input" id="defaultSubsidyRate" 
+                               value="0.85" step="0.01" min="0" max="1" onchange="updateDefaultParams()">
+                        <span class="input-addon">倍</span>
+                    </div>
+                    <small style="color: var(--gray-500); font-size: 12px; margin-top: 4px; display: block;">
+                        客单价 = ROI × 点击单价 ÷ 转化率 × 此系数
+                    </small>
+                </div>
+            </div>
+
+            <!-- 产品列表 -->
+            <div class="sidebar-section">
+                <div class="product-list-header">
+                    <h3 class="sidebar-title">📦 产品列表</h3>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span class="badge" id="productCount">0</span>
+                        <button class="btn btn-secondary btn-icon" onclick="quickSelectAll()" title="快速全选/取消全选" style="padding: 4px; font-size: 12px; width: 24px; height: 24px;">☑️</button>
+                    </div>
+                </div>
+                <div class="product-list" id="productList">
+                    <!-- 产品卡片将在这里动态生成 -->
+                </div>
+            </div>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <!-- 内容头部 -->
+            <div class="content-header">
+                <h1 class="content-title">数据分析面板</h1>
+                <p class="content-subtitle">实时监控产品利润表现，优化投资回报率</p>
+                <div class="content-actions">
+                    <button class="btn btn-secondary" onclick="refreshData()">🔄 刷新数据</button>
+                    <button class="btn btn-secondary" onclick="importTableData()">📊 导入表格</button>
+                    <button class="btn btn-secondary" onclick="importData()">📂 导入数据</button>
+                    <button class="btn btn-secondary" onclick="openColumnConfig()">⚙️ 指标配置</button>
+                    <button class="btn btn-secondary" id="applyDefaultBtn" onclick="applyDefaultConfig()" style="display: none; background: var(--primary-color); color: white;">
+                        ⚙️ 应用默认配置 (<span id="applySelectedCount">0</span>)
+                    </button>
+                    <button class="btn btn-secondary" id="batchSetBtn" onclick="openBatchSettings()" style="display: none; background: var(--success-color); color: white;">
+                        📝 批量设置 (<span id="batchSetCount">0</span>)
+                    </button>
+                    <button class="btn btn-secondary" id="batchDeleteBtn" onclick="batchDeleteProducts()" style="display: none; background: var(--danger-color); color: white;">
+                        🗑️ 批量删除 (<span id="selectedCount">0</span>)
+                    </button>
+                    <button class="btn btn-primary" onclick="generateReport()">📈 生成报告</button>
+                </div>
+            </div>
+
+            <!-- 数据表格 -->
+            <div class="table-container" id="tableContainer">
+                <div class="data-table">
+                    <div class="table-scroll-container">
+                        <div class="table-wrapper">
+                            <!-- 固定首列 -->
+                            <div class="fixed-column">
+                                <div class="table-header">
+                                    <div class="table-cell">
+                                        <input type="checkbox" id="selectAll" onchange="toggleSelectAll()" style="margin-right: 6px;">
+                                        产品名称
+                                    </div>
+                                </div>
+                                <div id="fixedColumnBody">
+                                    <!-- 固定列数据将在这里动态生成 -->
+                                </div>
+                            </div>
+                            
+                            <!-- 可滚动列 -->
+                            <div class="scrollable-columns">
+                                <div class="table-header">
+                                    <div class="table-row" id="dynamicTableHeader">
+                                        <!-- 表头将根据指标配置动态生成 -->
+                                    </div>
+                                </div>
+                                <div id="scrollableTableBody">
+                                    <!-- 可滚动列数据将在这里动态生成 -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- 滚动提示 -->
+                <div class="scroll-hint" id="scrollHint">
+                    ← → 左右滑动查看更多数据
+                </div>
+            </div>
+
+            <!-- 统计面板 -->
+            <div class="stats-panel">
+                <div class="stats-grid" id="statsGrid">
+                    <!-- 统计卡片将在这里动态生成 -->
+                </div>
+                <div class="chart-container" id="chartContainer">
+                    <!-- 图表将在这里显示 -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 浮动操作按钮 -->
+    <button class="fab" onclick="quickAdd()" title="快速添加产品">➕</button>
+
+    <!-- 表格导入模态框 -->
+    <div id="importModal" class="modal" style="display: none;" onclick="closeImportModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3>📊 导入表格数据</h3>
+                <button class="modal-close" onclick="closeImportModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="import-step" id="step1">
+                    <h4>步骤 1: 选择文件</h4>
+                    <p>支持多种表格格式：Excel (.xlsx, .xls)、CSV (.csv)、TSV (.tsv)、OpenDocument (.ods)</p>
+                    <input type="file" id="tableFileInput" accept=".xlsx,.xls,.csv,.tsv,.ods" onchange="handleTableFile(event)">
+                    <div class="file-drop-zone" id="fileDropZone">
+                        <p>拖拽文件到此处或点击上方按钮选择文件</p>
+                        <small style="color: var(--gray-500); margin-top: 8px; display: block;">
+                            支持的格式：Excel、CSV、TSV、ODS
+                        </small>
+                    </div>
+                </div>
+                
+                <div class="import-step" id="step2" style="display: none;">
+                    <h4>步骤 2: 字段映射</h4>
+                    <p>系统已自动识别字段，请确认映射关系：</p>
+                    <div class="field-mapping" id="fieldMapping">
+                        <!-- 字段映射将在这里动态生成 -->
+                    </div>
+                </div>
+                
+                <div class="import-step" id="step3" style="display: none;">
+                    <h4>步骤 3: 数据预览</h4>
+                    <div class="data-preview" id="dataPreview">
+                        <!-- 数据预览将在这里显示 -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeImportModal()">取消</button>
+                <button class="btn btn-secondary" id="prevBtn" onclick="prevStep()" style="display: none;">上一步</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextStep()" style="display: none;">下一步</button>
+                <button class="btn btn-primary" id="importBtn" onclick="confirmImport()" style="display: none;">导入数据</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 指标配置模态框 -->
+    <div id="columnConfigModal" class="modal" style="display: none;" onclick="closeColumnConfig()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3>⚙️ 指标配置</h3>
+                <button class="modal-close" onclick="closeColumnConfig()">×</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 24px;">
+                    <h4 style="color: var(--primary-color); margin-bottom: 8px;">选择要显示的指标</h4>
+                    <p style="color: var(--gray-600); margin-bottom: 16px; font-size: 14px;">
+                        勾选您希望在数据表格中显示的指标列，未勾选的指标将被隐藏。配置会自动保存。
+                    </p>
+                </div>
+                
+                <div class="field-mapping" id="columnConfigList">
+                    <!-- 指标配置项将在这里动态生成 -->
+                </div>
+                
+                <div style="margin-top: 24px; padding: 16px; background: var(--gray-50); border-radius: 8px;">
+                    <h5 style="margin: 0 0 8px 0; color: var(--gray-700);">快速操作</h5>
+                    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                        <button class="btn btn-secondary" onclick="selectAllColumns()" style="font-size: 12px; padding: 6px 12px;">全选</button>
+                        <button class="btn btn-secondary" onclick="selectNoneColumns()" style="font-size: 12px; padding: 6px 12px;">全不选</button>
+                        <button class="btn btn-secondary" onclick="selectCoreColumns()" style="font-size: 12px; padding: 6px 12px;">核心指标</button>
+                        <button class="btn btn-secondary" onclick="selectProfitColumns()" style="font-size: 12px; padding: 6px 12px;">利润分析</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeColumnConfig()">关闭</button>
+                <button class="btn btn-primary" onclick="applyColumnConfig()">应用配置</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 批量设置模态框 -->
+    <div id="batchSettingsModal" class="modal" style="display: none;" onclick="closeBatchSettings()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3>📝 批量设置参数</h3>
+                <button class="modal-close" onclick="closeBatchSettings()">×</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 24px;">
+                    <h4 style="color: var(--primary-color); margin-bottom: 8px;">
+                        批量设置 <span id="batchSettingsCount">0</span> 个产品的参数
+                    </h4>
+                    <p style="color: var(--gray-600); margin-bottom: 16px; font-size: 14px;">
+                        填写要批量设置的参数值，空白字段将保持产品当前值不变。
+                    </p>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                    <div class="form-group">
+                        <label class="form-label">商城扣点 (%)</label>
+                        <div class="input-group">
+                            <input type="number" class="form-input" id="batchPlatformFee" 
+                                   placeholder="如：8.0" step="0.1" min="0" max="100">
+                            <span class="input-addon">%</span>
+                        </div>
+                        <small style="color: var(--gray-500); font-size: 12px; margin-top: 4px; display: block;">
+                            平台收取的交易手续费
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">运费占比 (%)</label>
+                        <div class="input-group">
+                            <input type="number" class="form-input" id="batchShippingRate" 
+                                   placeholder="如：7.0" step="0.1" min="0" max="100">
+                            <span class="input-addon">%</span>
+                        </div>
+                        <small style="color: var(--gray-500); font-size: 12px; margin-top: 4px; display: block;">
+                            运费占售价的百分比
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">人员开销 (%)</label>
+                        <div class="input-group">
+                            <input type="number" class="form-input" id="batchLaborCost" 
+                                   placeholder="如：5.0" step="0.1" min="0" max="100">
+                            <span class="input-addon">%</span>
+                        </div>
+                        <small style="color: var(--gray-500); font-size: 12px; margin-top: 4px; display: block;">
+                            人力成本占售价的百分比
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">国补优惠系数</label>
+                        <div class="input-group">
+                            <input type="number" class="form-input" id="batchSubsidyRate" 
+                                   placeholder="如：0.85" step="0.01" min="0" max="1">
+                            <span class="input-addon">倍</span>
+                        </div>
+                        <small style="color: var(--gray-500); font-size: 12px; margin-top: 4px; display: block;">
+                            影响实际售价计算的系数
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">每单运费 (¥)</label>
+                        <div class="input-group">
+                            <input type="number" class="form-input" id="batchShippingCostPerOrder" 
+                                   placeholder="如：15.00" step="0.01" min="0">
+                            <span class="input-addon">¥</span>
+                        </div>
+                        <small style="color: var(--gray-500); font-size: 12px; margin-top: 4px; display: block;">
+                            每笔订单的运费金额
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">产品权重</label>
+                        <div class="input-group">
+                            <input type="number" class="form-input" id="batchWeight" 
+                                   placeholder="如：1" step="1" min="1">
+                            <span class="input-addon">倍</span>
+                        </div>
+                        <small style="color: var(--gray-500); font-size: 12px; margin-top: 4px; display: block;">
+                            用于预算权重分配
+                        </small>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 24px; padding: 16px; background: var(--primary-light); border-radius: 8px; border-left: 4px solid var(--primary-color);">
+                    <h5 style="margin: 0 0 8px 0; color: var(--primary-color);">💡 使用提示</h5>
+                    <ul style="margin: 0; padding-left: 16px; color: var(--gray-700); font-size: 13px;">
+                        <li>只有填写了数值的字段才会被批量设置</li>
+                        <li>空白字段将保持每个产品的当前值不变</li>
+                        <li>运费占比和每单运费会自动联动计算</li>
+                        <li>设置后会自动重新计算所有相关指标</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="clearBatchForm()">清空表单</button>
+                <button class="btn btn-secondary" onclick="closeBatchSettings()">取消</button>
+                <button class="btn btn-primary" onclick="applyBatchSettings()">应用设置</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局状态管理
+        let globalState = {
+            promotionBudget: 10000,
+            budgetAllocation: 'each_full',
+            defaultParams: {
+                platformFee: 8.0,
+                shippingRate: 7.0,
+                laborCost: 5.0,
+                shippingCostPerOrder: 0,
+                subsidyRate: 0.85  // 国补优惠系数
+            },
+            products: {},
+            productOrder: [],
+            selectedProduct: null,
+            productCount: 0,
+            // 排序状态
+            sortField: null,
+            sortDirection: 'desc',  // 'asc' 或 'desc'
+            // 批量选择状态
+            selectedProducts: new Set(),
+            selectAll: false,
+            // 指标配置
+            columnConfig: {
+                allocatedBudget: true,
+                totalActualProfit: true,
+                actualProfitPerOrder: true,
+                costPerOrder: true,
+                salesUnits: true,
+                salesRevenue: true,
+                platformFee: true,
+                shippingRate: true,
+                shippingCostPerOrder: true,
+                laborCost: true,
+                price: true,
+                cost: true,
+                clickPrice: true,
+                conversionRate: true,
+                roi: true,
+                actualPrice: true,
+                actualProfitRate: true,
+                grossProfitRate: true,
+                fixedCostRate: true,
+                breakevenPriceIncrease: true,
+                breakevenCostReduction: true
+            }
+        };
+
+        // 表格导入相关变量
+        let importState = {
+            currentStep: 1,
+            fileData: null,
+            fieldMapping: {},
+            previewData: []
+        };
+
+        // 字段映射配置
+        const FIELD_MAPPINGS = {
+            // 产品名称的各种可能字段名
+            '主体名称': 'name',
+            '产品名称': 'name', 
+            '商品名称': 'name',
+            '名称': 'name',
+            '商品': 'name',
+            '产品': 'name',
+            '标题': 'name',
+            'title': 'name',
+            'name': 'name',
+            'product': 'name',
+            'goods': 'name',
+            
+            // 点击单价的各种可能字段名
+            '平均点击花费': 'clickPrice',
+            '点击单价': 'clickPrice',
+            '点击花费': 'clickPrice',
+            '平均点击价格': 'clickPrice',
+            '点击价格': 'clickPrice',
+            '每次点击费用': 'clickPrice',
+            'cpc': 'clickPrice',
+            'click_price': 'clickPrice',
+            'avg_cpc': 'clickPrice',
+            '推广费用': 'clickPrice',
+            '平均点击成本': 'clickPrice',
+            
+            // 转化率的各种可能字段名
+            '点击转化率': 'conversionRate',
+            '转化率': 'conversionRate',
+            '转换率': 'conversionRate',
+            'conversion_rate': 'conversionRate',
+            'cvr': 'conversionRate',
+            '成交转化率': 'conversionRate',
+            '订单转化率': 'conversionRate',
+            
+            // 投产比的各种可能字段名
+            '投产比': 'roi',
+            '投入产出比': 'roi',
+            'roi': 'roi',
+            'roas': 'roi',
+            '回报率': 'roi',
+            '产出投入比': 'roi',
+            
+            // 产品售价的各种可能字段名
+            '产品售价': 'price',
+            '商品售价': 'price',
+            '售价': 'price',
+            '单价': 'price',
+            '价格': 'price',
+            '商品价格': 'price',
+            '产品价格': 'price',
+            '销售价格': 'price',
+            '零售价': 'price',
+            'price': 'price',
+            'unit_price': 'price',
+            'selling_price': 'price',
+            'retail_price': 'price',
+            '吊牌价': 'price',
+            '标价': 'price',
+            
+            // 产品成本的各种可能字段名
+            '产品成本': 'cost',
+            '商品成本': 'cost',
+            '进货价': 'cost',
+            '采购价': 'cost',
+            '供应商价': 'cost',
+            '原材料成本': 'cost',
+            '生产成本': 'cost',
+            '制造成本': 'cost',
+            'cost': 'cost',
+            'product_cost': 'cost',
+            'goods_cost': 'cost',
+            'purchase_price': 'cost',
+            'supplier_price': 'cost',
+            'manufacturing_cost': 'cost'
+        };
+
+        // 初始化应用
+        function initApp() {
+            console.log('开始初始化应用...');
+            try {
+                loadFromStorage();
+                renderProductList();
+                renderDataTable();
+                renderStats();
+                updateProductCount();
+                initScrollHint();
+                console.log('应用初始化完成', globalState);
+            } catch (error) {
+                console.error('应用初始化失败:', error);
+                alert('应用初始化失败，请刷新页面重试');
+            }
+        }
+
+        // 初始化滚动提示
+        function initScrollHint() {
+            const container = document.querySelector('.table-scroll-container');
+            const hint = document.getElementById('scrollHint');
+            
+            if (!container || !hint) return;
+            
+            // 检查是否需要滚动
+            function checkScrollNeed() {
+                const needsHorizontalScroll = container.scrollWidth > container.clientWidth;
+                
+                if (needsHorizontalScroll) {
+                    hint.classList.remove('hidden');
+                    
+                    // 3秒后自动隐藏提示
+                    setTimeout(() => {
+                        hint.classList.add('hidden');
+                    }, 3000);
+                } else {
+                    hint.classList.add('hidden');
+                }
+            }
+            
+            // 滚动时隐藏提示
+            container.addEventListener('scroll', () => {
+                hint.classList.add('hidden');
+            });
+            
+            // 鼠标进入表格区域时显示提示
+            container.addEventListener('mouseenter', () => {
+                const needsHorizontalScroll = container.scrollWidth > container.clientWidth;
+                if (needsHorizontalScroll) {
+                    hint.classList.remove('hidden');
+                }
+            });
+            
+            // 鼠标离开表格区域时隐藏提示
+            container.addEventListener('mouseleave', () => {
+                hint.classList.add('hidden');
+            });
+            
+            // 初始检查
+            setTimeout(checkScrollNeed, 100);
+            
+            // 窗口大小改变时重新检查
+            window.addEventListener('resize', checkScrollNeed);
+        }
+
+        // 添加产品
+        function addProduct() {
+            console.log('开始添加产品...');
+            try {
+                globalState.productCount++;
+                const productId = `product_${globalState.productCount}`;
+                
+                globalState.products[productId] = {
+                    id: productId,
+                    name: `产品 ${globalState.productCount}`,
+                    price: 0,
+                    cost: 0,
+                    clickPrice: 0,
+                    conversionRate: 0,
+                    weight: 1, // 用于预算分配
+                    // 继承默认参数
+                    ...globalState.defaultParams
+                };
+
+                globalState.productOrder.push(productId);
+                
+                // 重新分配预算
+                distributeBudget();
+                
+                renderProductList();
+                renderDataTable();
+                renderStats();
+                updateProductCount();
+                saveToStorage();
+                
+                console.log('产品添加成功:', productId, globalState.products[productId]);
+            } catch (error) {
+                console.error('添加产品失败:', error);
+                alert('添加产品失败: ' + error.message);
+            }
+        }
+
+        // 删除产品
+        function deleteProduct(productId) {
+            if (confirm('确定要删除这个产品吗？')) {
+                delete globalState.products[productId];
+                globalState.productOrder = globalState.productOrder.filter(id => id !== productId);
+                
+                // 清理选择状态
+                globalState.selectedProducts.delete(productId);
+                
+                if (globalState.selectedProduct === productId) {
+                    globalState.selectedProduct = null;
+                }
+                
+                renderProductList();
+                renderDataTable();
+                updateProductCount();
+                updateBatchActionButtons();
+                saveToStorage();
+            }
+        }
+
+        // 表格排序功能
+        function sortTable(field) {
+            // 如果点击的是当前排序字段，则切换排序方向
+            if (globalState.sortField === field) {
+                globalState.sortDirection = globalState.sortDirection === 'desc' ? 'asc' : 'desc';
+            } else {
+                globalState.sortField = field;
+                globalState.sortDirection = 'desc'; // 默认降序
+            }
+            
+            // 对产品进行排序
+            globalState.productOrder.sort((aId, bId) => {
+                const productA = globalState.products[aId];
+                const productB = globalState.products[bId];
+                const calculatedA = calculateProductData(productA);
+                const calculatedB = calculateProductData(productB);
+                
+                let valueA = calculatedA[field];
+                let valueB = calculatedB[field];
+                
+                // 确保数值比较
+                valueA = typeof valueA === 'number' ? valueA : 0;
+                valueB = typeof valueB === 'number' ? valueB : 0;
+                
+                if (globalState.sortDirection === 'desc') {
+                    return valueB - valueA;
+                } else {
+                    return valueA - valueB;
+                }
+            });
+            
+            // 更新排序图标
+            updateSortIcons();
+            
+            // 重新渲染表格
+            renderDataTable();
+            renderProductList();
+            saveToStorage();
+        }
+        
+        // 更新排序图标
+        function updateSortIcons() {
+            // 重置所有图标
+            document.querySelectorAll('.sort-icon').forEach(icon => {
+                icon.className = 'sort-icon';
+                icon.textContent = '⇅';
+            });
+            
+            // 设置当前排序字段的图标
+            if (globalState.sortField) {
+                const activeIcon = document.getElementById(`sort-${globalState.sortField}`);
+                if (activeIcon) {
+                    activeIcon.className = 'sort-icon active';
+                    activeIcon.textContent = globalState.sortDirection === 'desc' ? '↓' : '↑';
+                }
+            }
+        }
+        
+        // 批量选择和删除功能
+        function toggleSelectAll() {
+            const selectAllCheckbox = document.getElementById('selectAll');
+            const productCheckboxes = document.querySelectorAll('.product-checkbox');
+            
+            globalState.selectAll = selectAllCheckbox.checked;
+            
+            productCheckboxes.forEach(checkbox => {
+                checkbox.checked = globalState.selectAll;
+                const productId = checkbox.getAttribute('data-product-id');
+                if (globalState.selectAll) {
+                    globalState.selectedProducts.add(productId);
+                } else {
+                    globalState.selectedProducts.delete(productId);
+                }
+                // 立即更新每行的高亮状态
+                updateRowHighlight(productId);
+            });
+            
+            updateBatchActionButtons();
+        }
+        
+        function toggleProductSelection(productId) {
+            const checkbox = document.querySelector(`.product-checkbox[data-product-id="${productId}"]`);
+            
+            console.log('toggleProductSelection 调用:', productId, '复选框状态:', checkbox ? checkbox.checked : '未找到复选框');
+            
+            if (checkbox && checkbox.checked) {
+                globalState.selectedProducts.add(productId);
+                console.log('添加产品到选择集合:', productId);
+            } else {
+                globalState.selectedProducts.delete(productId);
+                console.log('从选择集合移除产品:', productId);
+            }
+            
+            // 立即更新行高亮状态
+            updateRowHighlight(productId);
+            
+            // 更新全选复选框状态
+            const selectAllCheckbox = document.getElementById('selectAll');
+            const totalProducts = globalState.productOrder.length;
+            const selectedCount = globalState.selectedProducts.size;
+            
+            if (selectedCount === 0) {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = false;
+            } else if (selectedCount === totalProducts) {
+                selectAllCheckbox.checked = true;
+                selectAllCheckbox.indeterminate = false;
+            } else {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = true;
+            }
+            
+            // 更新批量操作按钮
+            updateBatchActionButtons();
+        }
+        
+        // 更新单行高亮状态
+        function updateRowHighlight(productId) {
+            const isSelected = globalState.selectedProducts.has(productId);
+            
+            // 更新固定列
+            const fixedRow = document.querySelector(`#fixedColumnBody .table-cell[data-product-id="${productId}"]`);
+            if (fixedRow) {
+                if (isSelected) {
+                    fixedRow.classList.add('fixed-row-selected');
+                } else {
+                    fixedRow.classList.remove('fixed-row-selected');
+                }
+            }
+            
+            // 更新滚动列
+            const scrollableRow = document.querySelector(`#scrollableTableBody .table-row[data-product-id="${productId}"]`);
+            if (scrollableRow) {
+                if (isSelected) {
+                    scrollableRow.classList.add('table-row-selected');
+                } else {
+                    scrollableRow.classList.remove('table-row-selected');
+                }
+            }
+        }
+        
+        function updateBatchActionButtons() {
+            const batchDeleteBtn = document.getElementById('batchDeleteBtn');
+            const applyDefaultBtn = document.getElementById('applyDefaultBtn');
+            const batchSetBtn = document.getElementById('batchSetBtn');
+            const selectedCountSpan = document.getElementById('selectedCount');
+            const applySelectedCountSpan = document.getElementById('applySelectedCount');
+            const batchSetCountSpan = document.getElementById('batchSetCount');
+            const selectedCount = globalState.selectedProducts.size;
+            
+            console.log('更新批量按钮，选中产品数:', selectedCount, '选中的产品:', Array.from(globalState.selectedProducts));
+            
+            if (selectedCount > 0) {
+                // 显示批量删除按钮
+                if (batchDeleteBtn) {
+                    batchDeleteBtn.style.display = 'inline-flex';
+                    if (selectedCountSpan) selectedCountSpan.textContent = selectedCount;
+                }
+                
+                // 显示应用默认配置按钮
+                if (applyDefaultBtn) {
+                    applyDefaultBtn.style.display = 'inline-flex';
+                    if (applySelectedCountSpan) applySelectedCountSpan.textContent = selectedCount;
+                }
+                
+                // 显示批量设置按钮
+                if (batchSetBtn) {
+                    batchSetBtn.style.display = 'inline-flex';
+                    if (batchSetCountSpan) batchSetCountSpan.textContent = selectedCount;
+                }
+            } else {
+                // 隐藏所有按钮
+                if (batchDeleteBtn) batchDeleteBtn.style.display = 'none';
+                if (applyDefaultBtn) applyDefaultBtn.style.display = 'none';
+                if (batchSetBtn) batchSetBtn.style.display = 'none';
+            }
+        }
+        
+        // 保持向后兼容性
+        function updateBatchDeleteButton() {
+            updateBatchActionButtons();
+        }
+        
+        function batchDeleteProducts() {
+            const selectedCount = globalState.selectedProducts.size;
+            if (selectedCount === 0) return;
+            
+            if (confirm(`确定要删除选中的 ${selectedCount} 个产品吗？此操作不可撤销。`)) {
+                // 删除选中的产品
+                globalState.selectedProducts.forEach(productId => {
+                    delete globalState.products[productId];
+                    globalState.productOrder = globalState.productOrder.filter(id => id !== productId);
+                });
+                
+                // 清空选择状态
+                globalState.selectedProducts.clear();
+                globalState.selectAll = false;
+                
+                // 如果当前选中的产品被删除了，清空选择
+                if (globalState.selectedProduct && !globalState.products[globalState.selectedProduct]) {
+                    globalState.selectedProduct = null;
+                }
+                
+                // 重新渲染
+                renderProductList();
+                renderDataTable();
+                updateProductCount();
+                updateBatchActionButtons();
+                saveToStorage();
+            }
+        }
+        
+        // 批量设置功能
+        function openBatchSettings() {
+            const selectedCount = globalState.selectedProducts.size;
+            if (selectedCount === 0) {
+                alert('请先选择要设置的产品！');
+                return;
+            }
+            
+            // 更新模态框中的产品数量显示
+            document.getElementById('batchSettingsCount').textContent = selectedCount;
+            
+            // 清空表单
+            clearBatchForm();
+            
+            // 显示模态框
+            document.getElementById('batchSettingsModal').style.display = 'flex';
+        }
+        
+        function closeBatchSettings() {
+            document.getElementById('batchSettingsModal').style.display = 'none';
+        }
+        
+        function clearBatchForm() {
+            document.getElementById('batchPlatformFee').value = '';
+            document.getElementById('batchShippingRate').value = '';
+            document.getElementById('batchLaborCost').value = '';
+            document.getElementById('batchSubsidyRate').value = '';
+            document.getElementById('batchShippingCostPerOrder').value = '';
+            document.getElementById('batchWeight').value = '';
+        }
+        
+        function applyBatchSettings() {
+            const selectedCount = globalState.selectedProducts.size;
+            if (selectedCount === 0) {
+                alert('没有选中的产品！');
+                return;
+            }
+            
+            // 获取表单数据
+            const batchData = {
+                platformFee: parseFloat(document.getElementById('batchPlatformFee').value) || null,
+                shippingRate: parseFloat(document.getElementById('batchShippingRate').value) || null,
+                laborCost: parseFloat(document.getElementById('batchLaborCost').value) || null,
+                subsidyRate: parseFloat(document.getElementById('batchSubsidyRate').value) || null,
+                shippingCostPerOrder: parseFloat(document.getElementById('batchShippingCostPerOrder').value) || null,
+                weight: parseFloat(document.getElementById('batchWeight').value) || null
+            };
+            
+            // 检查是否有设置项
+            const hasSettings = Object.values(batchData).some(value => value !== null);
+            if (!hasSettings) {
+                alert('请至少填写一个要设置的参数！');
+                return;
+            }
+            
+            // 创建设置摘要
+            let settingSummary = [];
+            if (batchData.platformFee !== null) settingSummary.push(`商城扣点：${batchData.platformFee}%`);
+            if (batchData.shippingRate !== null) settingSummary.push(`运费占比：${batchData.shippingRate}%`);
+            if (batchData.laborCost !== null) settingSummary.push(`人员开销：${batchData.laborCost}%`);
+            if (batchData.subsidyRate !== null) settingSummary.push(`国补优惠系数：${batchData.subsidyRate}`);
+            if (batchData.shippingCostPerOrder !== null) settingSummary.push(`每单运费：¥${batchData.shippingCostPerOrder}`);
+            if (batchData.weight !== null) settingSummary.push(`产品权重：${batchData.weight}`);
+            
+            // 确认对话框
+            const confirmMessage = `确定要对选中的 ${selectedCount} 个产品批量设置以下参数吗？\n\n${settingSummary.join('\n')}\n\n注意：空白字段将保持产品当前值不变。`;
+            
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+            
+            let updatedCount = 0;
+            
+            // 对选中的产品应用设置
+            globalState.selectedProducts.forEach(productId => {
+                if (globalState.products[productId]) {
+                    const product = globalState.products[productId];
+                    
+                    // 应用非空的设置项
+                    if (batchData.platformFee !== null) {
+                        product.platformFee = batchData.platformFee;
+                    }
+                    if (batchData.shippingRate !== null) {
+                        product.shippingRate = batchData.shippingRate;
+                    }
+                    if (batchData.laborCost !== null) {
+                        product.laborCost = batchData.laborCost;
+                    }
+                    if (batchData.subsidyRate !== null) {
+                        product.subsidyRate = batchData.subsidyRate;
+                    }
+                    if (batchData.shippingCostPerOrder !== null) {
+                        product.shippingCostPerOrder = batchData.shippingCostPerOrder;
+                    }
+                    if (batchData.weight !== null) {
+                        product.weight = batchData.weight;
+                    }
+                    
+                    // 处理运费联动计算
+                    if (batchData.shippingRate !== null || batchData.shippingCostPerOrder !== null) {
+                        if (batchData.shippingRate !== null && product.price > 0) {
+                            // 根据运费占比计算每单运费
+                            if (batchData.shippingCostPerOrder === null) {
+                                product.shippingCostPerOrder = (product.price * batchData.shippingRate) / 100;
+                            }
+                        } else if (batchData.shippingCostPerOrder !== null && product.price > 0) {
+                            // 根据每单运费计算运费占比
+                            if (batchData.shippingRate === null) {
+                                product.shippingRate = (batchData.shippingCostPerOrder / product.price) * 100;
+                            }
+                        }
+                    }
+                    
+                    updatedCount++;
+                }
+            });
+            
+            // 重新分配预算（如果设置了权重）
+            if (batchData.weight !== null) {
+                distributeBudget();
+            }
+            
+            // 重新渲染界面
+            renderProductList();
+            renderDataTable();
+            renderStats();
+            saveToStorage();
+            
+            // 关闭模态框
+            closeBatchSettings();
+            
+            // 显示成功消息
+            alert(`成功批量设置 ${updatedCount} 个产品的参数！\n\n设置项：\n${settingSummary.join('\n')}`);
+        }
+
+        // 应用默认配置到选中的产品
+        function applyDefaultConfig() {
+            const selectedCount = globalState.selectedProducts.size;
+            if (selectedCount === 0) return;
+            
+            if (confirm(`确定要将默认配置应用到选中的 ${selectedCount} 个产品吗？\n\n将应用以下默认配置：\n• 商城扣点：${globalState.defaultParams.platformFee}%\n• 运费占比：${globalState.defaultParams.shippingRate}%\n• 人员开销：${globalState.defaultParams.laborCost}%\n• 国补优惠系数：${globalState.defaultParams.subsidyRate}`)) {
+                
+                let appliedCount = 0;
+                
+                // 对选中的产品应用默认配置
+                globalState.selectedProducts.forEach(productId => {
+                    if (globalState.products[productId]) {
+                        const product = globalState.products[productId];
+                        
+                        // 应用默认参数，但保留产品特有数据
+                        product.platformFee = globalState.defaultParams.platformFee;
+                        product.shippingRate = globalState.defaultParams.shippingRate;
+                        product.laborCost = globalState.defaultParams.laborCost;
+                        product.subsidyRate = globalState.defaultParams.subsidyRate;
+                        
+                        // 重新计算运费（如果有设置每单运费）
+                        if (product.shippingCostPerOrder > 0 && product.price > 0) {
+                            product.shippingRate = (product.shippingCostPerOrder / product.price) * 100;
+                        } else if (product.shippingRate > 0 && product.price > 0) {
+                            product.shippingCostPerOrder = (product.price * product.shippingRate) / 100;
+                        }
+                        
+                        appliedCount++;
+                    }
+                });
+                
+                // 重新分配预算
+                distributeBudget();
+                
+                // 重新渲染界面
+                renderProductList();
+                renderDataTable();
+                renderStats();
+                saveToStorage();
+                
+                alert(`成功应用默认配置到 ${appliedCount} 个产品！`);
+            }
+        }
+        
+        // 更新复选框状态
+        function updateCheckboxStates() {
+            // 更新产品复选框状态
+            const productCheckboxes = document.querySelectorAll('.product-checkbox');
+            productCheckboxes.forEach(checkbox => {
+                const productId = checkbox.getAttribute('data-product-id');
+                if (productId) {
+                    checkbox.checked = globalState.selectedProducts.has(productId);
+                    // 立即更新行高亮状态
+                    updateRowHighlight(productId);
+                }
+            });
+            
+            // 更新全选复选框状态
+            const selectAllCheckbox = document.getElementById('selectAll');
+            if (selectAllCheckbox) {
+                const totalProducts = globalState.productOrder.length;
+                const selectedCount = globalState.selectedProducts.size;
+                
+                if (selectedCount === 0) {
+                    selectAllCheckbox.checked = false;
+                    selectAllCheckbox.indeterminate = false;
+                } else if (selectedCount === totalProducts) {
+                    selectAllCheckbox.checked = true;
+                    selectAllCheckbox.indeterminate = false;
+                } else {
+                    selectAllCheckbox.checked = false;
+                    selectAllCheckbox.indeterminate = true;
+                }
+            }
+            
+            // 更新批量操作按钮
+            updateBatchActionButtons();
+        }
+
+        // 生成计算公式说明的工具提示文本
+        function getTooltipText(field, product, calculated) {
+            const tooltips = {
+                allocatedBudget: "推广预算\n\n根据预算分配方式确定：\n• 每店推广预算总额：每个产品使用全部预算\n• 平均分配：总预算 ÷ 产品数量\n• 按权重分配：总预算 × (产品权重 ÷ 总权重)\n• 手动分配：用户自定义设置",
+                
+                totalActualProfit: `推广实际利润 = 推广销售单数 × 每单实际利润\n\n计算过程：\n销售单数：${calculated.salesUnits.toFixed(0)} 单\n每单实际利润：¥${calculated.actualProfitPerOrder.toFixed(2)}\n实际利润：${calculated.salesUnits.toFixed(0)} × ${calculated.actualProfitPerOrder.toFixed(2)} = ¥${calculated.totalActualProfit.toFixed(2)}`,
+                
+                actualProfitPerOrder: `每单实际利润 = 单位利润 - 成交每单成本\n\n计算过程：\n单位利润：¥${calculated.unitProfit.toFixed(2)}\n成交每单成本：¥${calculated.costPerOrder.toFixed(2)}\n每单实际利润：${calculated.unitProfit.toFixed(2)} - ${calculated.costPerOrder.toFixed(2)} = ¥${calculated.actualProfitPerOrder.toFixed(2)}`,
+                
+                costPerOrder: `成交每单成本 = 点击单价 ÷ 转化率\n\n计算过程：\n点击单价：¥${product.clickPrice}\n转化率：${product.conversionRate}%\n成交每单成本：${product.clickPrice} ÷ ${product.conversionRate/100} = ¥${calculated.costPerOrder.toFixed(2)}`,
+                
+                salesUnits: `推广销售单数 = (推广预算 ÷ 点击单价) × 转化率\n\n计算过程：\n推广预算：¥${(product.allocatedBudget || 0).toFixed(2)}\n点击单价：¥${product.clickPrice}\n转化率：${product.conversionRate}%\n销售单数：(${(product.allocatedBudget || 0).toFixed(2)} ÷ ${product.clickPrice}) × ${product.conversionRate/100} = ${calculated.salesUnits.toFixed(0)} 单`,
+                
+                salesRevenue: `推广销售额 = 推广销售单数 × 实际售价\n\n计算过程：\n推广销售单数：${calculated.salesUnits.toFixed(0)} 单\n实际售价：¥${calculated.actualPrice.toFixed(2)}\n推广销售额：${calculated.salesUnits.toFixed(0)} × ${calculated.actualPrice.toFixed(2)} = ¥${calculated.salesRevenue.toFixed(2)}`,
+                
+                platformFee: `商城扣点\n\n平台收取的交易手续费百分比\n当前设置：${product.platformFee}%\n\n影响实际利润率计算`,
+                
+                shippingRate: `运费占比\n\n运费占实际售价的百分比\n当前设置：${product.shippingRate}%\n\n与每单运费联动：\n运费占比 = 每单运费 ÷ 实际售价 × 100%`,
+                
+                shippingCostPerOrder: `每单运费\n\n每笔订单的运费金额\n当前设置：¥${product.shippingCostPerOrder}\n\n与运费占比联动：\n每单运费 = 实际售价 × 运费占比 ÷ 100%`,
+                
+                laborCost: `人员开销\n\n人力成本占实际售价的百分比\n当前设置：${product.laborCost}%\n\n包括客服、运营、包装等人力成本`,
+                
+                price: `产品售价\n\n产品的标准销售价格\n当前设置：¥${product.price}\n\n注意：实际收入以"实际售价"为准\n(考虑国补优惠等因素)`,
+                
+                cost: `产品成本\n\n产品的采购或生产成本\n当前设置：¥${product.cost}\n\n用于计算各种利润率指标`,
+                
+                clickPrice: `点击单价\n\n推广中每次点击的平均费用\n当前设置：¥${product.clickPrice}\n\n也称为CPC (Cost Per Click)`,
+                
+                conversionRate: `转化率\n\n点击转化为购买的比例\n当前设置：${product.conversionRate}%\n\n转化率 = 订单数 ÷ 点击数 × 100%`,
+                
+                roi: `投产比 (ROI)\n\n投入产出比，衡量推广效果\n计算公式：投产比 = (产品售价 × 转化率) ÷ 点击单价\n\n计算过程：\n产品售价：¥${product.price}\n转化率：${product.conversionRate}%\n点击单价：¥${product.clickPrice}\nROI：(${product.price} × ${product.conversionRate/100}) ÷ ${product.clickPrice} = ${calculated.roi.toFixed(2)}`,
+                
+                actualPrice: `实际售价 = ROI × 点击单价 ÷ 转化率 × 国补优惠系数\n\n计算过程：\nROI：${calculated.roi.toFixed(2)}\n点击单价：¥${product.clickPrice}\n转化率：${product.conversionRate}%\n国补优惠系数：${globalState.defaultParams.subsidyRate || 0.85}\n\n实际售价：${calculated.roi.toFixed(2)} × ${product.clickPrice} ÷ ${product.conversionRate/100} × ${globalState.defaultParams.subsidyRate || 0.85} = ¥${calculated.actualPrice.toFixed(2)}\n\n这是用户实际收到的单价`,
+                
+                actualProfitRate: `实际利润率 = 实际毛利润率 - 商城扣点 - 运费占比 - 人员开销\n\n计算过程：\n实际毛利润率：${(calculated.actualGrossProfitRate * 100).toFixed(1)}%\n商城扣点：${product.platformFee}%\n运费占比：${(calculated.shippingRateActual * 100).toFixed(1)}%\n人员开销：${product.laborCost}%\n\n实际利润率：${(calculated.actualGrossProfitRate * 100).toFixed(1)}% - ${product.platformFee}% - ${(calculated.shippingRateActual * 100).toFixed(1)}% - ${product.laborCost}% = ${(calculated.actualProfitRate * 100).toFixed(1)}%`,
+                
+                grossProfitRate: `售价利润率 = (实际售价 - 产品成本) ÷ 实际售价 × 100%\n\n计算过程：\n实际售价：¥${calculated.actualPrice.toFixed(2)}\n产品成本：¥${product.cost}\n售价利润率：(${calculated.actualPrice.toFixed(2)} - ${product.cost}) ÷ ${calculated.actualPrice.toFixed(2)} × 100% = ${(calculated.actualGrossProfitRate * 100).toFixed(1)}%\n\n这是基于实际售价的毛利润率`,
+                
+                fixedCostRate: `保本利润率 = 商城扣点 + 运费占比 + 人员开销\n\n计算过程：\n商城扣点：${product.platformFee}%\n运费占比：${(calculated.shippingRateActual * 100).toFixed(1)}%\n人员开销：${product.laborCost}%\n\n保本利润率：${product.platformFee}% + ${(calculated.shippingRateActual * 100).toFixed(1)}% + ${product.laborCost}% = ${(calculated.fixedCostRate * 100).toFixed(1)}%\n\n要盈利，售价利润率必须超过此值`,
+                
+                breakevenPriceIncrease: calculated.breakevenPriceIncrease >= 0 ? 
+                    `涨价保本：需要涨价 ¥${calculated.breakevenPriceIncrease.toFixed(2)} 达到盈亏平衡\n\n保本售价计算：\n保本售价 = (产品成本 + 成交每单成本) ÷ (1 - 固定成本率)\n\n计算过程：\n产品成本：¥${product.cost}\n成交每单成本：¥${calculated.costPerOrder.toFixed(2)}\n固定成本率：${(calculated.fixedCostRate * 100).toFixed(1)}%\n\n保本售价：(${product.cost} + ${calculated.costPerOrder.toFixed(2)}) ÷ (1 - ${calculated.fixedCostRate.toFixed(3)}) = ¥${(calculated.actualPrice + calculated.breakevenPriceIncrease).toFixed(2)}\n涨价金额：${(calculated.actualPrice + calculated.breakevenPriceIncrease).toFixed(2)} - ${calculated.actualPrice.toFixed(2)} = +¥${calculated.breakevenPriceIncrease.toFixed(2)}` :
+                    `已经盈利：当前售价已超过保本点 ¥${Math.abs(calculated.breakevenPriceIncrease).toFixed(2)}\n\n当前实际售价：¥${calculated.actualPrice.toFixed(2)}\n理论保本售价：¥${(calculated.actualPrice + calculated.breakevenPriceIncrease).toFixed(2)}\n超出保本点：¥${Math.abs(calculated.breakevenPriceIncrease).toFixed(2)}`,
+                
+                breakevenCostReduction: calculated.breakevenCostReduction >= 0 ?
+                    `降本保本：需要降低成本 ¥${calculated.breakevenCostReduction.toFixed(2)} 达到盈亏平衡\n\n保本成本计算：\n保本成本 = 实际售价 × (1 - 固定成本率) - 成交每单成本\n\n计算过程：\n实际售价：¥${calculated.actualPrice.toFixed(2)}\n固定成本率：${(calculated.fixedCostRate * 100).toFixed(1)}%\n成交每单成本：¥${calculated.costPerOrder.toFixed(2)}\n\n保本成本：${calculated.actualPrice.toFixed(2)} × (1 - ${calculated.fixedCostRate.toFixed(3)}) - ${calculated.costPerOrder.toFixed(2)} = ¥${(product.cost - calculated.breakevenCostReduction).toFixed(2)}\n降本金额：${product.cost} - ${(product.cost - calculated.breakevenCostReduction).toFixed(2)} = -¥${calculated.breakevenCostReduction.toFixed(2)}` :
+                    `成本已优化：当前成本已低于保本点 ¥${Math.abs(calculated.breakevenCostReduction).toFixed(2)}\n\n当前产品成本：¥${product.cost}\n理论保本成本：¥${(product.cost - calculated.breakevenCostReduction).toFixed(2)}\n成本优化空间：¥${Math.abs(calculated.breakevenCostReduction).toFixed(2)}`
+            };
+            
+            return tooltips[field] || "暂无计算说明";
+        }
+
+        // 选择产品
+        function selectProduct(productId) {
+            const previousSelected = globalState.selectedProduct;
+            globalState.selectedProduct = productId;
+            
+            // 立即更新高亮状态
+            updateProductActiveState(previousSelected, productId);
+            
+            renderProductList();
+        }
+        
+        // 更新产品的单选高亮状态
+        function updateProductActiveState(previousProductId, currentProductId) {
+            // 移除之前选中产品的高亮
+            if (previousProductId) {
+                const prevFixedRow = document.querySelector(`#fixedColumnBody .table-cell[data-product-id="${previousProductId}"]`);
+                const prevScrollableRow = document.querySelector(`#scrollableTableBody .table-row[data-product-id="${previousProductId}"]`);
+                
+                if (prevFixedRow) {
+                    prevFixedRow.classList.remove('fixed-row-active');
+                }
+                if (prevScrollableRow) {
+                    prevScrollableRow.classList.remove('table-row-active');
+                }
+            }
+            
+            // 添加当前选中产品的高亮
+            if (currentProductId) {
+                const currentFixedRow = document.querySelector(`#fixedColumnBody .table-cell[data-product-id="${currentProductId}"]`);
+                const currentScrollableRow = document.querySelector(`#scrollableTableBody .table-row[data-product-id="${currentProductId}"]`);
+                
+                if (currentFixedRow) {
+                    currentFixedRow.classList.add('fixed-row-active');
+                }
+                if (currentScrollableRow) {
+                    currentScrollableRow.classList.add('table-row-active');
+                }
+            }
+        }
+
+        // 更新产品数据
+        function updateProduct(productId, field, value) {
+            if (globalState.products[productId]) {
+                if (field === 'name') {
+                    globalState.products[productId][field] = value;
+                } else {
+                    const numValue = parseFloat(value) || 0;
+                    globalState.products[productId][field] = numValue;
+                    
+                    // 运费和运费占比联动计算
+                    if (field === 'shippingRate' || field === 'shippingCostPerOrder') {
+                        calculateShippingFields(productId, field, numValue);
+                    } else if (field === 'price') {
+                        // 售价改变时，根据当前运费占比重新计算每单运费
+                        calculateShippingFields(productId, 'shippingRate', globalState.products[productId].shippingRate);
+                    }
+                }
+                distributeBudget();
+                renderProductList();
+                renderDataTable();
+                renderStats();
+                saveToStorage();
+            }
+        }
+        
+        // 运费字段联动计算
+        function calculateShippingFields(productId, changedField, value) {
+            const product = globalState.products[productId];
+            
+            if (changedField === 'shippingRate' && value > 0 && product.price > 0) {
+                // 运费占比改变，计算每单运费
+                product.shippingCostPerOrder = (product.price * value) / 100;
+            } else if (changedField === 'shippingCostPerOrder' && value > 0 && product.price > 0) {
+                // 每单运费改变，计算运费占比
+                product.shippingRate = (value / product.price) * 100;
+            }
+        }
+
+        // 更新全局预算
+        function updateGlobalBudget() {
+            globalState.promotionBudget = parseFloat(document.getElementById('globalPromotionBudget').value) || 0;
+            distributeBudget();
+            renderDataTable();
+            renderStats();
+            saveToStorage();
+        }
+
+        // 更新预算分配方式
+        function updateBudgetAllocation() {
+            globalState.budgetAllocation = document.getElementById('budgetAllocation').value;
+            distributeBudget();
+            renderDataTable();
+            saveToStorage();
+        }
+
+        // 分配预算
+        function distributeBudget() {
+            const totalProducts = globalState.productOrder.length;
+            if (totalProducts === 0) return;
+
+            const totalBudget = globalState.promotionBudget;
+
+            switch (globalState.budgetAllocation) {
+                case 'each_full':
+                    // 每店推广预算总额 - 每个产品都使用全部预算
+                    globalState.productOrder.forEach(productId => {
+                        globalState.products[productId].allocatedBudget = totalBudget;
+                    });
+                    break;
+                    
+                case 'equal':
+                    // 平均分配
+                    const budgetPerProduct = totalBudget / totalProducts;
+                    globalState.productOrder.forEach(productId => {
+                        globalState.products[productId].allocatedBudget = budgetPerProduct;
+                    });
+                    break;
+                
+                case 'weighted':
+                    // 按权重分配
+                    const totalWeight = globalState.productOrder.reduce((sum, productId) => {
+                        return sum + (globalState.products[productId].weight || 1);
+                    }, 0);
+                    
+                    globalState.productOrder.forEach(productId => {
+                        const weight = globalState.products[productId].weight || 1;
+                        globalState.products[productId].allocatedBudget = totalBudget * (weight / totalWeight);
+                    });
+                    break;
+                
+                case 'manual':
+                    // 手动分配时不自动更新
+                    break;
+            }
+        }
+
+        // 更新默认参数
+        function updateDefaultParams() {
+            globalState.defaultParams = {
+                platformFee: parseFloat(document.getElementById('defaultPlatformFee').value) || 0,
+                shippingRate: parseFloat(document.getElementById('defaultShippingRate').value) || 0,
+                laborCost: parseFloat(document.getElementById('defaultLaborCost').value) || 0,
+                shippingCostPerOrder: 0,
+                subsidyRate: parseFloat(document.getElementById('defaultSubsidyRate').value) || 0.85
+            };
+            saveToStorage();
+        }
+
+        // 计算产品数据
+        function calculateProductData(product) {
+            const { price, cost, clickPrice, conversionRate, platformFee, shippingRate, laborCost, shippingCostPerOrder, subsidyRate } = product;
+            const convRate = conversionRate / 100;
+            const subsidy = subsidyRate || globalState.defaultParams.subsidyRate || 0.85;
+            
+            // 基础计算
+            const costPerOrder = convRate > 0 ? clickPrice / convRate : 0;
+            const roi = clickPrice > 0 ? (price * convRate) / clickPrice : 0;
+            
+            // 实际售价计算：ROI × 点击单价 ÷ 点击转化率 × 国补优惠系数
+            const actualPrice = roi && clickPrice && convRate > 0 ? 
+                (roi * clickPrice / convRate) * subsidy : 
+                price * subsidy;
+            
+            // 基于原始产品售价的利润率计算
+            const grossProfitRate = price > 0 ? (price - cost) / price : 0;
+            
+            // 基于实际售价的利润率计算
+            const actualGrossProfitRate = actualPrice > 0 ? (actualPrice - cost) / actualPrice : 0;
+            
+            // 运费计算 - 基于实际售价
+            const shippingRateActual = shippingCostPerOrder > 0 ? 
+                shippingCostPerOrder / actualPrice : 
+                shippingRate / 100;
+            
+            // 利润计算 - 基于实际售价
+            const actualProfitRate = actualGrossProfitRate - platformFee/100 - shippingRateActual - laborCost/100;
+            const unitProfit = actualPrice * actualProfitRate;
+            const actualProfitPerOrder = unitProfit - costPerOrder;
+            
+            // 保本分析 - 基于实际售价
+            const fixedCostRate = platformFee/100 + shippingRateActual + laborCost/100;
+            const customerAcquisitionCost = convRate > 0 ? clickPrice / convRate : 0;
+            
+            let breakevenPriceIncrease = 0;
+            if (fixedCostRate < 1 && (cost > 0 || customerAcquisitionCost > 0)) {
+                const breakevenPrice = (cost + customerAcquisitionCost) / (1 - fixedCostRate);
+                breakevenPriceIncrease = breakevenPrice - actualPrice;  // 基于实际售价
+            }
+            
+            let breakevenCostReduction = 0;
+            if (actualPrice > 0) {
+                const breakevenCost = actualPrice * (1 - fixedCostRate) - customerAcquisitionCost;  // 基于实际售价
+                breakevenCostReduction = cost - breakevenCost;
+            }
+            
+            // 推广分析 - 基于实际售价
+            const allocatedBudget = product.allocatedBudget || 0;
+            const salesUnits = clickPrice > 0 && convRate > 0 ? (allocatedBudget / clickPrice) * convRate : 0;
+            const salesRevenue = salesUnits * actualPrice;  // 基于实际售价
+            const totalActualProfit = salesUnits * actualProfitPerOrder;
+            const promotionROI = allocatedBudget > 0 ? totalActualProfit / allocatedBudget : 0;
+
+            return {
+                costPerOrder,
+                roi,
+                actualPrice,
+                grossProfitRate,
+                actualGrossProfitRate,
+                shippingRateActual,
+                actualProfitRate,
+                unitProfit,
+                actualProfitPerOrder,
+                breakevenPriceIncrease,
+                breakevenCostReduction,
+                salesUnits,
+                salesRevenue,
+                totalActualProfit,
+                promotionROI,
+                fixedCostRate
+            };
+        }
+
+        // 渲染产品列表
+        function renderProductList() {
+            const container = document.getElementById('productList');
+            container.innerHTML = '';
+
+            globalState.productOrder.forEach(productId => {
+                const product = globalState.products[productId];
+                const calculated = calculateProductData(product);
+                const isActive = globalState.selectedProduct === productId;
+                
+                const card = document.createElement('div');
+                card.className = `product-card ${isActive ? 'active' : ''}`;
+                card.onclick = () => selectProduct(productId);
+                
+                const statusClass = calculated.actualProfitPerOrder >= 0 ? 'status-profit' : 'status-loss';
+                const statusText = calculated.actualProfitPerOrder >= 0 ? '盈利' : '亏损';
+                
+                card.innerHTML = `
+                    <div class="product-card-header">
+                        <span class="product-name">${product.name}</span>
+                        <span class="product-status ${statusClass}">${statusText}</span>
+                    </div>
+                    <div class="product-metrics">
+                        <div>ROI: ${calculated.roi.toFixed(2)}</div>
+                        <div>利润率: ${(calculated.actualProfitRate * 100).toFixed(1)}%</div>
+                        <div>每单利润: ¥${calculated.actualProfitPerOrder.toFixed(2)}</div>
+                        <div>预算: ¥${(product.allocatedBudget || 0).toFixed(0)}</div>
+                    </div>
+                `;
+                
+                container.appendChild(card);
+            });
+        }
+
+        // 渲染数据表格
+        function renderDataTable() {
+            const fixedColumnBody = document.getElementById('fixedColumnBody');
+            const scrollableTableBody = document.getElementById('scrollableTableBody');
+            const dynamicTableHeader = document.getElementById('dynamicTableHeader');
+            
+            fixedColumnBody.innerHTML = '';
+            scrollableTableBody.innerHTML = '';
+            
+            // 定义所有可用的列配置
+            const allColumnConfigs = [
+                { key: 'allocatedBudget', name: '推广预算', sortable: false, type: 'display' },
+                { key: 'totalActualProfit', name: '推广实际利润', sortable: true, type: 'display' },
+                { key: 'actualProfitPerOrder', name: '每单实际利润', sortable: true, type: 'display' },
+                { key: 'costPerOrder', name: '成交每单成本', sortable: true, type: 'display' },
+                { key: 'salesUnits', name: '推广销售单数', sortable: true, type: 'display' },
+                { key: 'salesRevenue', name: '推广销售额', sortable: true, type: 'display' },
+                { key: 'platformFee', name: '商城扣点', sortable: false, type: 'input' },
+                { key: 'shippingRate', name: '运费占比', sortable: false, type: 'input' },
+                { key: 'shippingCostPerOrder', name: '每单运费', sortable: false, type: 'input' },
+                { key: 'laborCost', name: '人员开销', sortable: false, type: 'input' },
+                { key: 'price', name: '产品售价', sortable: false, type: 'input' },
+                { key: 'cost', name: '产品成本', sortable: false, type: 'input' },
+                { key: 'clickPrice', name: '点击单价', sortable: false, type: 'input' },
+                { key: 'conversionRate', name: '转化率', sortable: false, type: 'input' },
+                { key: 'roi', name: '投产比', sortable: false, type: 'display' },
+                { key: 'actualPrice', name: '实际售价', sortable: true, type: 'display' },
+                { key: 'actualProfitRate', name: '实际利润率', sortable: false, type: 'display' },
+                { key: 'grossProfitRate', name: '售价利润率', sortable: false, type: 'display' },
+                { key: 'fixedCostRate', name: '保本利润率', sortable: false, type: 'display' },
+                { key: 'breakevenPriceIncrease', name: '涨价保本', sortable: false, type: 'display' },
+                { key: 'breakevenCostReduction', name: '降本保本', sortable: false, type: 'display' }
+            ];
+            
+            // 根据配置过滤可见列
+            const visibleColumns = allColumnConfigs.filter(col => globalState.columnConfig[col.key]);
+            
+            // 生成动态表头
+            let headerHTML = '';
+            visibleColumns.forEach(col => {
+                if (col.sortable) {
+                    headerHTML += `
+                        <div class="table-cell sortable" onclick="sortTable('${col.key}')">
+                            ${col.name} <span class="sort-icon" id="sort-${col.key}">⇅</span>
+                        </div>
+                    `;
+                } else {
+                    headerHTML += `<div class="table-cell">${col.name}</div>`;
+                }
+            });
+            
+            // 始终添加操作列
+            headerHTML += '<div class="table-cell">操作</div>';
+            
+            // 计算grid-template-columns
+            const columnWidths = visibleColumns.map(() => '120px').join(' ') + ' 80px'; // 最后80px是操作列
+            dynamicTableHeader.style.gridTemplateColumns = columnWidths;
+            dynamicTableHeader.innerHTML = headerHTML;
+
+            globalState.productOrder.forEach(productId => {
+                const product = globalState.products[productId];
+                const calculated = calculateProductData(product);
+                const isSelected = globalState.selectedProducts.has(productId);
+                const isActive = globalState.selectedProduct === productId;
+                
+                // 固定列（复选框 + 产品名称 + 删除按钮）
+                const fixedRow = document.createElement('div');
+                let fixedRowClass = 'table-cell';
+                if (isSelected) fixedRowClass += ' fixed-row-selected';
+                if (isActive) fixedRowClass += ' fixed-row-active';
+                fixedRow.className = fixedRowClass;
+                fixedRow.setAttribute('data-product-id', productId);
+                fixedRow.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 4px; width: 100%; height: 100%;">
+                        <input type="checkbox" class="product-checkbox" data-product-id="${productId}" 
+                               onchange="toggleProductSelection('${productId}')" style="margin: 0;">
+                        <input type="text" class="cell-input" value="${product.name}" 
+                               onchange="updateProduct('${productId}', 'name', this.value)" 
+                               onclick="selectProduct('${productId}')"
+                               style="flex: 1; min-width: 50px; font-size: 11px; padding: 2px 4px;">
+                        <button class="btn btn-secondary btn-icon" onclick="deleteProduct('${productId}')" 
+                                title="删除" style="padding: 2px; font-size: 8px; width: 18px; height: 18px; min-width: 18px;">🗑️</button>
+                    </div>
+                `;
+                fixedColumnBody.appendChild(fixedRow);
+                
+                // 可滚动列（根据配置动态生成）
+                const scrollableRow = document.createElement('div');
+                let scrollableRowClass = 'table-row';
+                if (isSelected) scrollableRowClass += ' table-row-selected';
+                if (isActive) scrollableRowClass += ' table-row-active';
+                scrollableRow.className = scrollableRowClass;
+                scrollableRow.setAttribute('data-product-id', productId);
+                scrollableRow.style.gridTemplateColumns = columnWidths;
+                // 添加点击选择功能
+                scrollableRow.onclick = () => selectProduct(productId);
+                
+                let cellsHTML = '';
+                visibleColumns.forEach(col => {
+                    cellsHTML += generateCellHTML(col, product, calculated, productId);
+                });
+                
+                // 始终添加操作列
+                cellsHTML += `
+                    <div class="table-cell">
+                        <div class="cell-label">操作</div>
+                        <div class="cell-value neutral" style="font-size: 10px;">左侧删除</div>
+                    </div>
+                `;
+                
+                scrollableRow.innerHTML = cellsHTML;
+                scrollableTableBody.appendChild(scrollableRow);
+            });
+            
+            // 表格渲染完成后，重新检查滚动提示和更新排序图标
+            setTimeout(() => {
+                const container = document.querySelector('.table-scroll-container');
+                const hint = document.getElementById('scrollHint');
+                if (container && hint) {
+                    const needsHorizontalScroll = container.scrollWidth > container.clientWidth;
+                    if (needsHorizontalScroll && globalState.productOrder.length > 0) {
+                        hint.classList.remove('hidden');
+                        setTimeout(() => hint.classList.add('hidden'), 3000);
+                    }
+                }
+                
+                // 更新排序图标
+                updateSortIcons();
+                
+                // 更新复选框状态
+                updateCheckboxStates();
+            }, 100);
+        }
+        
+        // 生成单元格HTML的辅助函数
+        function generateCellHTML(columnConfig, product, calculated, productId) {
+            const { key, type } = columnConfig;
+            
+            if (type === 'input') {
+                // 输入类型的单元格
+                let inputValue, inputType = 'number', step = '0.01';
+                let label = columnConfig.name;
+                
+                switch (key) {
+                    case 'platformFee':
+                    case 'shippingRate':
+                    case 'laborCost':
+                        inputValue = product[key];
+                        label += '%';
+                        step = '0.1';
+                        break;
+                    case 'conversionRate':
+                        inputValue = product[key];
+                        label += '%';
+                        step = '0.001';
+                        break;
+                    default:
+                        inputValue = product[key];
+                }
+                
+                return `
+                    <div class="table-cell">
+                        <div class="cell-label">${label}</div>
+                        <input type="${inputType}" class="cell-input tooltip" step="${step}" value="${inputValue}" 
+                               onchange="updateProduct('${productId}', '${key}', this.value)" 
+                               data-tooltip="${getTooltipText(key, product, calculated)}">
+                    </div>
+                `;
+            } else {
+                // 显示类型的单元格
+                let displayValue, valueClass = 'neutral';
+                
+                switch (key) {
+                    case 'allocatedBudget':
+                        displayValue = `¥${(product.allocatedBudget || 0).toFixed(2)}`;
+                        break;
+                    case 'totalActualProfit':
+                        displayValue = `¥${calculated.totalActualProfit.toFixed(2)}`;
+                        valueClass = calculated.totalActualProfit >= 0 ? 'positive' : 'negative';
+                        break;
+                    case 'actualProfitPerOrder':
+                        displayValue = `¥${calculated.actualProfitPerOrder.toFixed(2)}`;
+                        valueClass = calculated.actualProfitPerOrder >= 0 ? 'positive' : 'negative';
+                        break;
+                    case 'costPerOrder':
+                        displayValue = `¥${calculated.costPerOrder.toFixed(2)}`;
+                        break;
+                    case 'salesUnits':
+                        displayValue = calculated.salesUnits.toFixed(0);
+                        break;
+                    case 'salesRevenue':
+                        displayValue = `¥${calculated.salesRevenue.toFixed(2)}`;
+                        break;
+                    case 'roi':
+                        displayValue = calculated.roi.toFixed(2);
+                        valueClass = calculated.roi >= 1 ? 'positive' : 'negative';
+                        break;
+                    case 'actualPrice':
+                        displayValue = `¥${calculated.actualPrice.toFixed(2)}`;
+                        valueClass = calculated.actualPrice >= 0 ? 'positive' : 'negative';
+                        break;
+                    case 'actualProfitRate':
+                        displayValue = `${(calculated.actualProfitRate * 100).toFixed(1)}%`;
+                        valueClass = calculated.actualProfitRate >= 0 ? 'positive' : 'negative';
+                        break;
+                    case 'grossProfitRate':
+                        displayValue = `${(calculated.actualGrossProfitRate * 100).toFixed(1)}%`;
+                        valueClass = calculated.actualGrossProfitRate >= 0 ? 'positive' : 'negative';
+                        break;
+                    case 'fixedCostRate':
+                        displayValue = `${(calculated.fixedCostRate * 100).toFixed(1)}%`;
+                        break;
+                    case 'breakevenPriceIncrease':
+                        displayValue = `${calculated.breakevenPriceIncrease >= 0 ? '+' : ''}¥${calculated.breakevenPriceIncrease.toFixed(2)}`;
+                        valueClass = calculated.breakevenPriceIncrease > 0 ? 'negative' : 'positive';
+                        break;
+                    case 'breakevenCostReduction':
+                        displayValue = `${calculated.breakevenCostReduction >= 0 ? '-' : '+'}¥${Math.abs(calculated.breakevenCostReduction).toFixed(2)}`;
+                        valueClass = calculated.breakevenCostReduction > 0 ? 'positive' : 'negative';
+                        break;
+                    default:
+                        displayValue = '-';
+                }
+                
+                return `
+                    <div class="table-cell">
+                        <div class="cell-label">${columnConfig.name}</div>
+                        <div class="cell-value ${valueClass} tooltip" data-tooltip="${getTooltipText(key, product, calculated)}">${displayValue}</div>
+                    </div>
+                `;
+            }
+        }
+
+        // 渲染统计数据
+        function renderStats() {
+            const container = document.getElementById('statsGrid');
+            
+            // 计算汇总数据
+            let totalProducts = globalState.productOrder.length;
+            let totalBudget = globalState.promotionBudget;
+            let totalProfit = 0;
+            let totalRevenue = 0;
+            let profitableProducts = 0;
+
+            globalState.productOrder.forEach(productId => {
+                const product = globalState.products[productId];
+                const calculated = calculateProductData(product);
+                
+                totalProfit += calculated.totalActualProfit;
+                totalRevenue += calculated.salesRevenue;
+                
+                if (calculated.actualProfitPerOrder > 0) {
+                    profitableProducts++;
+                }
+            });
+
+            // 根据分配方式调整总预算显示
+            let actualTotalBudget = totalBudget;
+            let budgetLabel = '推广预算';
+            
+            if (globalState.budgetAllocation === 'each_full') {
+                actualTotalBudget = totalBudget * totalProducts;
+                budgetLabel = '总投入预算';
+            }
+
+            const avgROI = actualTotalBudget > 0 ? totalProfit / actualTotalBudget : 0;
+            const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+
+            container.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${totalProducts}</div>
+                    <div class="stat-label">产品总数</div>
+                    <div class="stat-change positive">${profitableProducts} 个盈利</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">¥${actualTotalBudget.toFixed(0)}</div>
+                    <div class="stat-label">${budgetLabel}</div>
+                    <div class="stat-change neutral">${globalState.budgetAllocation === 'each_full' ? '每店¥' + totalBudget.toFixed(0) : '全局设置'}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value ${totalProfit >= 0 ? 'positive' : 'negative'}">¥${totalProfit.toFixed(0)}</div>
+                    <div class="stat-label">预期总利润</div>
+                    <div class="stat-change ${profitMargin >= 0 ? 'positive' : 'negative'}">${profitMargin.toFixed(1)}% 利润率</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value ${avgROI >= 1 ? 'positive' : 'negative'}">${avgROI.toFixed(2)}</div>
+                    <div class="stat-label">平均ROI</div>
+                    <div class="stat-change ${avgROI >= 1 ? 'positive' : 'negative'}">${avgROI >= 1 ? '盈利' : '亏损'}</div>
+                </div>
+            `;
+        }
+
+        // 更新产品计数
+        function updateProductCount() {
+            document.getElementById('productCount').textContent = globalState.productOrder.length;
+        }
+
+        // 本地存储
+        function saveToStorage() {
+            try {
+                // 创建一个可序列化的状态副本
+                const stateToSave = {
+                    ...globalState,
+                    // 不保存批量选择状态，这些是临时的UI状态
+                    selectedProducts: undefined,
+                    selectAll: undefined
+                };
+                
+                localStorage.setItem('productAnalyzerPro', JSON.stringify(stateToSave));
+            } catch (error) {
+                console.error('保存数据失败:', error);
+            }
+        }
+
+        function loadFromStorage() {
+            const saved = localStorage.getItem('productAnalyzerPro');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    // 保持批量选择状态不被覆盖
+                    const currentSelectedProducts = globalState.selectedProducts;
+                    const currentSelectAll = globalState.selectAll;
+                    
+                    globalState = { ...globalState, ...data };
+                    
+                    // 恢复批量选择状态
+                    globalState.selectedProducts = currentSelectedProducts;
+                    globalState.selectAll = currentSelectAll;
+                    
+                    // 确保defaultParams存在
+                    if (!globalState.defaultParams) {
+                        globalState.defaultParams = {
+                            platformFee: 8.0,
+                            shippingRate: 7.0,
+                            laborCost: 5.0,
+                            shippingCostPerOrder: 0,
+                            subsidyRate: 0.85
+                        };
+                    } else if (!globalState.defaultParams.subsidyRate) {
+                        // 为现有数据添加国补优惠系数
+                        globalState.defaultParams.subsidyRate = 0.85;
+                    }
+                    
+                    // 确保columnConfig存在且包含所有字段
+                    if (!globalState.columnConfig) {
+                        globalState.columnConfig = {
+                            allocatedBudget: true,
+                            totalActualProfit: true,
+                            actualProfitPerOrder: true,
+                            costPerOrder: true,
+                            salesUnits: true,
+                            salesRevenue: true,
+                            platformFee: true,
+                            shippingRate: true,
+                            shippingCostPerOrder: true,
+                            laborCost: true,
+                            price: true,
+                            cost: true,
+                            clickPrice: true,
+                            conversionRate: true,
+                            roi: true,
+                            actualPrice: true,
+                            actualProfitRate: true,
+                            grossProfitRate: true,
+                            fixedCostRate: true,
+                            breakevenPriceIncrease: true,
+                            breakevenCostReduction: true
+                        };
+                    } else {
+                        // 确保现有配置包含所有新字段
+                        const defaultColumnConfig = {
+                            allocatedBudget: true,
+                            totalActualProfit: true,
+                            actualProfitPerOrder: true,
+                            costPerOrder: true,
+                            salesUnits: true,
+                            salesRevenue: true,
+                            platformFee: true,
+                            shippingRate: true,
+                            shippingCostPerOrder: true,
+                            laborCost: true,
+                            price: true,
+                            cost: true,
+                            clickPrice: true,
+                            conversionRate: true,
+                            roi: true,
+                            actualPrice: true,
+                            actualProfitRate: true,
+                            grossProfitRate: true,
+                            fixedCostRate: true,
+                            breakevenPriceIncrease: true,
+                            breakevenCostReduction: true
+                        };
+                        
+                        // 添加缺失的字段
+                        Object.keys(defaultColumnConfig).forEach(key => {
+                            if (!(key in globalState.columnConfig)) {
+                                globalState.columnConfig[key] = defaultColumnConfig[key];
+                            }
+                        });
+                    }
+                    
+                    // 更新UI
+                    document.getElementById('globalPromotionBudget').value = globalState.promotionBudget;
+                    document.getElementById('budgetAllocation').value = globalState.budgetAllocation;
+                    document.getElementById('defaultPlatformFee').value = globalState.defaultParams.platformFee;
+                    document.getElementById('defaultShippingRate').value = globalState.defaultParams.shippingRate;
+                    document.getElementById('defaultLaborCost').value = globalState.defaultParams.laborCost;
+                    document.getElementById('defaultSubsidyRate').value = globalState.defaultParams.subsidyRate;
+                } catch (e) {
+                    console.error('加载数据失败:', e);
+                    // 如果加载失败，重置为默认状态
+                    resetToDefaultState();
+                }
+            } else {
+                // 如果没有保存的数据，设置默认值
+                document.getElementById('globalPromotionBudget').value = globalState.promotionBudget;
+                document.getElementById('budgetAllocation').value = globalState.budgetAllocation;
+                document.getElementById('defaultPlatformFee').value = globalState.defaultParams.platformFee;
+                document.getElementById('defaultShippingRate').value = globalState.defaultParams.shippingRate;
+                document.getElementById('defaultLaborCost').value = globalState.defaultParams.laborCost;
+                document.getElementById('defaultSubsidyRate').value = globalState.defaultParams.subsidyRate;
+            }
+        }
+        
+        // 重置为默认状态
+        function resetToDefaultState() {
+            globalState = {
+                promotionBudget: 10000,
+                budgetAllocation: 'each_full',
+                defaultParams: {
+                    platformFee: 8.0,
+                    shippingRate: 7.0,
+                    laborCost: 5.0,
+                    shippingCostPerOrder: 0,
+                    subsidyRate: 0.85
+                },
+                products: {},
+                productOrder: [],
+                selectedProduct: null,
+                productCount: 0,
+                sortField: null,
+                sortDirection: 'desc',
+                selectedProducts: new Set(),
+                selectAll: false,
+                columnConfig: {
+                    allocatedBudget: true,
+                    totalActualProfit: true,
+                    actualProfitPerOrder: true,
+                    costPerOrder: true,
+                    salesUnits: true,
+                    salesRevenue: true,
+                    platformFee: true,
+                    shippingRate: true,
+                    shippingCostPerOrder: true,
+                    laborCost: true,
+                    price: true,
+                    cost: true,
+                    clickPrice: true,
+                    conversionRate: true,
+                    roi: true,
+                    actualPrice: true,
+                    actualProfitRate: true,
+                    grossProfitRate: true,
+                    fixedCostRate: true,
+                    breakevenPriceIncrease: true,
+                    breakevenCostReduction: true
+                }
+            };
+        }
+
+        // 导出数据
+        function exportData() {
+            const dataToExport = {
+                ...globalState,
+                exportTime: new Date().toISOString(),
+                version: '1.0'
+            };
+            
+            const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `产品分析数据_${new Date().toISOString().slice(0, 10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // 导入数据
+        function importData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = function(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        if (confirm('导入数据将覆盖当前数据，是否继续？')) {
+                            globalState = { ...globalState, ...data };
+                            initApp();
+                            alert('数据导入成功！');
+                        }
+                    } catch (error) {
+                        alert('文件格式错误，导入失败！');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        // 其他功能函数
+        function toggleTheme() {
+            // TODO: 实现主题切换
+            alert('主题切换功能开发中...');
+        }
+
+        function refreshData() {
+            renderProductList();
+            renderDataTable();
+            renderStats();
+        }
+
+        function generateReport() {
+            // TODO: 实现报告生成
+            alert('报告生成功能开发中...');
+        }
+
+        function quickAdd() {
+            addProduct();
+        }
+
+        // 快速全选/取消全选功能
+        function quickSelectAll() {
+            const selectAllCheckbox = document.getElementById('selectAll');
+            if (!selectAllCheckbox) return;
+            
+            // 如果当前没有产品，直接返回
+            if (globalState.productOrder.length === 0) {
+                alert('暂无产品可选择');
+                return;
+            }
+            
+            // 切换全选状态
+            const currentSelectedCount = globalState.selectedProducts.size;
+            const totalProducts = globalState.productOrder.length;
+            
+            if (currentSelectedCount === totalProducts) {
+                // 当前全选状态，执行取消全选
+                globalState.selectedProducts.clear();
+                globalState.selectAll = false;
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = false;
+                
+                // 更新所有行的高亮状态
+                globalState.productOrder.forEach(productId => {
+                    updateRowHighlight(productId);
+                });
+            } else {
+                // 当前非全选状态，执行全选
+                globalState.selectedProducts.clear();
+                globalState.productOrder.forEach(productId => {
+                    globalState.selectedProducts.add(productId);
+                });
+                globalState.selectAll = true;
+                selectAllCheckbox.checked = true;
+                selectAllCheckbox.indeterminate = false;
+                
+                // 更新所有行的高亮状态
+                globalState.productOrder.forEach(productId => {
+                    updateRowHighlight(productId);
+                });
+            }
+            
+            // 更新复选框状态和批量删除按钮
+            updateCheckboxStates();
+            updateBatchActionButtons();
+        }
+
+        // 表格导入功能
+        function importTableData() {
+            console.log('开始表格导入...');
+            try {
+                importState = {
+                    currentStep: 1,
+                    fileData: null,
+                    fieldMapping: {},
+                    previewData: []
+                };
+                
+                document.getElementById('importModal').style.display = 'flex';
+                showStep(1);
+                
+                // 模态框打开后初始化拖拽功能
+                setTimeout(() => {
+                    initDragDrop();
+                }, 100);
+                
+                console.log('导入模态框已打开');
+            } catch (error) {
+                console.error('打开导入模态框失败:', error);
+                alert('导入功能启动失败: ' + error.message);
+            }
+        }
+
+        function closeImportModal() {
+            document.getElementById('importModal').style.display = 'none';
+        }
+
+        function initDragDrop() {
+            // 在导入模态框打开时才初始化拖拽功能
+            const dropZone = document.getElementById('fileDropZone');
+            
+            if (!dropZone) {
+                console.warn('fileDropZone element not found');
+                return;
+            }
+            
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('drag-over');
+            });
+            
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('drag-over');
+            });
+            
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('drag-over');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleTableFile({ target: { files: files } });
+                }
+            });
+        }
+
+        function handleTableFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            console.log('开始处理文件:', file.name, '大小:', file.size, '类型:', file.type);
+
+            const fileName = file.name.toLowerCase();
+            const fileExtension = fileName.split('.').pop();
+
+            // 支持的文件格式
+            const supportedFormats = ['xlsx', 'xls', 'csv', 'tsv', 'ods'];
+            
+            if (!supportedFormats.includes(fileExtension)) {
+                alert(`不支持的文件格式！\n支持的格式：${supportedFormats.map(f => '.' + f).join(', ')}`);
+                return;
+            }
+
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    console.log('文件读取完成，开始解析...');
+                    let data;
+                    
+                    if (fileExtension === 'csv') {
+                        // CSV 格式解析 - 处理编码
+                        const textContent = detectAndDecodeText(e.target.result);
+                        data = parseCSV(textContent);
+                    } else if (fileExtension === 'tsv') {
+                        // TSV 格式解析 - 处理编码  
+                        const textContent = detectAndDecodeText(e.target.result);
+                        data = parseTSV(textContent);
+                    } else if (['xlsx', 'xls', 'ods'].includes(fileExtension)) {
+                        // Excel 和 ODS 格式解析
+                        data = parseExcel(e.target.result);
+                    } else {
+                        throw new Error('不支持的文件格式');
+                    }
+                    
+                    console.log('文件解析成功:', data);
+                    
+                    if (!data || !data.headers || !data.rows || data.rows.length === 0) {
+                        throw new Error('文件中没有找到有效数据');
+                    }
+                    
+                    importState.fileData = data;
+                    processFieldMapping(data);
+                    nextStep();
+                } catch (error) {
+                    console.error('文件解析失败:', error);
+                    alert(`文件解析失败！\n错误信息：${error.message}\n\n请检查：\n1. 文件格式是否正确\n2. 文件是否包含表头\n3. 文件是否包含数据行`);
+                }
+            };
+            
+            // 根据文件类型选择读取方式
+            if (['csv', 'tsv'].includes(fileExtension)) {
+                // 尝试多种编码读取文本文件
+                reader.readAsArrayBuffer(file);  // 先读取为ArrayBuffer处理编码
+            } else {
+                reader.readAsArrayBuffer(file);
+            }
+        }
+
+        // 检测和处理文件编码
+        function detectAndDecodeText(arrayBuffer) {
+            // 尝试不同编码
+            const encodings = ['utf-8', 'gbk', 'gb2312'];
+            
+            for (const encoding of encodings) {
+                try {
+                    const decoder = new TextDecoder(encoding);
+                    const text = decoder.decode(arrayBuffer);
+                    
+                    // 检查是否包含乱码字符
+                    if (!text.includes('�') && text.length > 0) {
+                        console.log(`成功使用 ${encoding} 编码解析文件`);
+                        return text;
+                    }
+                } catch (error) {
+                    console.log(`尝试 ${encoding} 编码失败:`, error);
+                }
+            }
+            
+            // 如果都失败，使用UTF-8作为默认
+            console.log('使用UTF-8作为默认编码');
+            const decoder = new TextDecoder('utf-8');
+            return decoder.decode(arrayBuffer);
+        }
+
+        function parseCSV(csvText) {
+            const lines = csvText.split('\n').filter(line => line.trim());
+            if (lines.length < 2) {
+                throw new Error('CSV文件至少需要包含表头和一行数据');
+            }
+            
+            // 改进的CSV解析，支持引号内的逗号
+            function parseCSVLine(line) {
+                const result = [];
+                let current = '';
+                let inQuotes = false;
+                
+                for (let i = 0; i < line.length; i++) {
+                    const char = line[i];
+                    
+                    if (char === '"') {
+                        inQuotes = !inQuotes;
+                    } else if (char === ',' && !inQuotes) {
+                        result.push(current.trim());
+                        current = '';
+                    } else {
+                        current += char;
+                    }
+                }
+                
+                result.push(current.trim());
+                return result.map(cell => cell.replace(/^"|"$/g, ''));
+            }
+            
+            const headers = parseCSVLine(lines[0]);
+            const rows = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+                const values = parseCSVLine(lines[i]);
+                if (values.length === headers.length) {
+                    const row = {};
+                    headers.forEach((header, index) => {
+                        row[header] = values[index];
+                    });
+                    rows.push(row);
+                }
+            }
+            
+            return { headers, rows };
+        }
+
+        function parseTSV(tsvText) {
+            const lines = tsvText.split('\n').filter(line => line.trim());
+            if (lines.length < 2) {
+                throw new Error('TSV文件至少需要包含表头和一行数据');
+            }
+            
+            const headers = lines[0].split('\t').map(h => h.trim());
+            const rows = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split('\t').map(v => v.trim());
+                if (values.length === headers.length) {
+                    const row = {};
+                    headers.forEach((header, index) => {
+                        row[header] = values[index];
+                    });
+                    rows.push(row);
+                }
+            }
+            
+            return { headers, rows };
+        }
+
+        function parseExcel(arrayBuffer) {
+            try {
+                // 使用 SheetJS 解析 Excel 文件
+                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                
+                // 获取第一个工作表
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                
+                // 转换为JSON格式
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                
+                if (jsonData.length < 2) {
+                    throw new Error('Excel文件至少需要包含表头和一行数据');
+                }
+                
+                const headers = jsonData[0].map(h => String(h || '').trim());
+                const rows = [];
+                
+                for (let i = 1; i < jsonData.length; i++) {
+                    const rowData = jsonData[i];
+                    if (rowData && rowData.length > 0) {
+                        const row = {};
+                        let hasData = false;
+                        
+                        headers.forEach((header, index) => {
+                            const value = String(rowData[index] || '').trim();
+                            row[header] = value;
+                            if (value) hasData = true;
+                        });
+                        
+                        // 只添加有数据的行
+                        if (hasData) {
+                            rows.push(row);
+                        }
+                    }
+                }
+                
+                return { headers, rows };
+            } catch (error) {
+                console.error('Excel解析错误:', error);
+                throw new Error('Excel文件解析失败，请检查文件是否损坏或格式是否正确');
+            }
+        }
+
+        function processFieldMapping(data) {
+            const mapping = {};
+            const mappingContainer = document.getElementById('fieldMapping');
+            mappingContainer.innerHTML = '';
+            
+            console.log('开始处理字段映射:', data.headers);
+            
+            data.headers.forEach((header, index) => {
+                const originalHeader = header;
+                const normalizedHeader = header.toLowerCase().trim().replace(/[_\s-]/g, '');
+                let targetField = null;
+                
+                // 特殊处理：如果是第三列且内容看起来像乱码，很可能是产品成本
+                if (index === 2 && (header.includes('��') || header.includes('�ɱ�') || originalHeader.length < 10)) {
+                    targetField = 'cost';
+                    mapping[originalHeader] = 'cost';
+                }
+                // 精确匹配
+                else if (FIELD_MAPPINGS[header]) {
+                    targetField = FIELD_MAPPINGS[header];
+                } else if (FIELD_MAPPINGS[header.toLowerCase()]) {
+                    targetField = FIELD_MAPPINGS[header.toLowerCase()];
+                } else {
+                    // 模糊匹配
+                    for (const [pattern, field] of Object.entries(FIELD_MAPPINGS)) {
+                        const normalizedPattern = pattern.toLowerCase().replace(/[_\s-]/g, '');
+                        if (normalizedHeader.includes(normalizedPattern) || 
+                            header.includes(pattern) || 
+                            pattern.includes(header)) {
+                            targetField = field;
+                            mapping[originalHeader] = field;
+                            break;
+                        }
+                    }
+                }
+                
+                if (targetField) {
+                    mapping[originalHeader] = targetField;
+                    const mapItem = document.createElement('div');
+                    mapItem.className = 'field-map-item';
+                    mapItem.innerHTML = `
+                        <div class="field-source">${originalHeader}</div>
+                        <div class="field-arrow">→</div>
+                        <div class="field-target">${getFieldDisplayName(targetField)}</div>
+                    `;
+                    mappingContainer.appendChild(mapItem);
+                }
+            });
+            
+            importState.fieldMapping = mapping;
+            
+            console.log('字段映射结果:', mapping);
+            
+            if (Object.keys(mapping).length === 0) {
+                mappingContainer.innerHTML = `
+                    <div style="padding: 20px; text-align: center; color: var(--warning-color);">
+                        <h4>⚠️ 未找到匹配的字段</h4>
+                        <p>请检查文件中的列名是否包含以下内容：</p>
+                        <ul style="text-align: left; margin: 16px 0; color: var(--gray-600);">
+                            <li><strong>产品名称：</strong>主体名称、产品名称、商品名称、名称等</li>
+                            <li><strong>投产比：</strong>投产比、投入产出比、ROI、ROAS等</li>
+                            <li><strong>点击单价：</strong>平均点击花费、点击单价、CPC等</li>
+                            <li><strong>转化率：</strong>点击转化率、转化率、CVR等</li>
+                            <li><strong>产品售价：</strong>产品售价、商品售价、售价、单价、价格等</li>
+                            <li><strong>产品成本：</strong>产品成本、商品成本、成本、进货价、采购价等</li>
+                        </ul>
+                        <p style="margin-top: 8px; font-size: 12px; color: var(--primary-color);">
+                            <strong>注意：</strong>如果表格中有投产比、点击单价、转化率，系统会自动计算产品售价
+                        </p>
+                        <p>检测到的列名：${data.headers.join(', ')}</p>
+                    </div>
+                `;
+            } else {
+                // 添加成功提示
+                const successDiv = document.createElement('div');
+                successDiv.innerHTML = `
+                    <div style="padding: 16px; background: var(--success-light); border-radius: 8px; margin-bottom: 16px; color: var(--success-color);">
+                        <strong>✅ 成功识别 ${Object.keys(mapping).length} 个字段</strong>
+                    </div>
+                `;
+                mappingContainer.insertBefore(successDiv, mappingContainer.firstChild);
+            }
+        }
+
+        function getFieldDisplayName(field) {
+            const displayNames = {
+                'name': '产品名称',
+                'price': '产品售价',
+                'cost': '产品成本',
+                'clickPrice': '点击单价', 
+                'conversionRate': '转化率',
+                'roi': '投产比'
+            };
+            return displayNames[field] || field;
+        }
+
+        function showStep(step) {
+            // 隐藏所有步骤
+            for (let i = 1; i <= 3; i++) {
+                document.getElementById(`step${i}`).style.display = 'none';
+            }
+            
+            // 显示当前步骤
+            document.getElementById(`step${step}`).style.display = 'block';
+            
+            // 更新按钮状态
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const importBtn = document.getElementById('importBtn');
+            
+            prevBtn.style.display = step > 1 ? 'inline-flex' : 'none';
+            nextBtn.style.display = step < 3 ? 'inline-flex' : 'none';
+            importBtn.style.display = step === 3 ? 'inline-flex' : 'none';
+            
+            importState.currentStep = step;
+        }
+
+        function nextStep() {
+            if (importState.currentStep === 1) {
+                if (!importState.fileData) {
+                    alert('请先选择文件！');
+                    return;
+                }
+                showStep(2);
+            } else if (importState.currentStep === 2) {
+                generatePreview();
+                showStep(3);
+            }
+        }
+
+        function prevStep() {
+            if (importState.currentStep > 1) {
+                showStep(importState.currentStep - 1);
+            }
+        }
+
+        function generatePreview() {
+            const previewContainer = document.getElementById('dataPreview');
+            const { rows } = importState.fileData;
+            const { fieldMapping } = importState;
+            
+            // 处理数据
+            const processedData = rows.slice(0, 10).map(row => {
+                const processed = {};
+                Object.entries(fieldMapping).forEach(([sourceField, targetField]) => {
+                    let value = row[sourceField] || '';
+                    
+                    // 数据清理和转换
+                    if (targetField === 'clickPrice' || targetField === 'conversionRate' || targetField === 'price' || targetField === 'roi' || targetField === 'cost') {
+                        // 移除货币符号和百分号
+                        value = value.replace(/[¥$%,]/g, '');
+                        value = parseFloat(value) || 0;
+                        
+                        // 转化率如果小于1，假设是百分比的小数形式（如0.00746），需要转换为百分比显示形式
+                        if (targetField === 'conversionRate' && value < 1 && value > 0) {
+                            value = value * 100; // 转换为百分比形式（如0.746）
+                        }
+                    }
+                    
+                    processed[targetField] = value;
+                });
+                
+                // 如果有投产比、点击单价、转化率，但没有直接的售价，则计算售价
+                if (processed.roi && processed.clickPrice && processed.conversionRate && !processed.price) {
+                    // 公式：投产比 × 点击单价 ÷ 点击转化率 = 产品售价
+                    const conversionRateDecimal = processed.conversionRate / 100; // 转换为小数
+                    if (conversionRateDecimal > 0) {
+                        processed.price = (processed.roi * processed.clickPrice) / conversionRateDecimal;
+                    }
+                }
+                
+                return processed;
+            });
+            
+            importState.previewData = processedData;
+            
+            // 生成预览表格
+            let tableHTML = `
+                <table class="preview-table">
+                    <thead>
+                        <tr>
+                            <th>产品名称</th>
+                            <th>投产比</th>
+                            <th>点击单价</th>
+                            <th>转化率</th>
+                            <th>产品售价</th>
+                            <th>产品成本</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            processedData.forEach(item => {
+                // 检查售价是否是计算得出的
+                const isPriceCalculated = item.roi && item.clickPrice && item.conversionRate && item.price && !item.originalPrice;
+                const priceDisplay = item.price ? 
+                    (isPriceCalculated ? '¥' + item.price.toFixed(2) + ' (计算)' : '¥' + item.price.toFixed(2)) : 
+                    '-';
+                    
+                tableHTML += `
+                    <tr>
+                        <td>${item.name || '-'}</td>
+                        <td>${item.roi ? item.roi.toFixed(2) : '-'}</td>
+                        <td>${item.clickPrice ? '¥' + item.clickPrice.toFixed(2) : '-'}</td>
+                        <td>${item.conversionRate ? item.conversionRate.toFixed(3) + '%' : '-'}</td>
+                        <td>${priceDisplay}</td>
+                        <td>${item.cost ? '¥' + item.cost.toFixed(2) : '-'}</td>
+                    </tr>
+                `;
+            });
+            
+            tableHTML += '</tbody></table>';
+            
+            if (rows.length > 10) {
+                tableHTML += `<p style="margin-top: 16px; color: var(--gray-600); font-size: 12px;">预览前10条数据，共${rows.length}条</p>`;
+            }
+            
+            previewContainer.innerHTML = tableHTML;
+        }
+
+        function confirmImport() {
+            const { rows } = importState.fileData;
+            const { fieldMapping } = importState;
+            
+            let importedCount = 0;
+            
+            rows.forEach(row => {
+                const productData = {};
+                Object.entries(fieldMapping).forEach(([sourceField, targetField]) => {
+                    let value = row[sourceField] || '';
+                    
+                    if (targetField === 'clickPrice' || targetField === 'conversionRate' || targetField === 'price' || targetField === 'roi' || targetField === 'cost') {
+                        value = value.replace(/[¥$%,]/g, '');
+                        value = parseFloat(value) || 0;
+                        
+                        // 转化率如果小于1，假设是百分比的小数形式，需要转换为百分比显示形式
+                        if (targetField === 'conversionRate' && value < 1 && value > 0) {
+                            value = value * 100;
+                        }
+                    }
+                    
+                    productData[targetField] = value;
+                });
+                
+                // 如果有投产比、点击单价、转化率，但没有直接的售价，则计算售价
+                if (productData.roi && productData.clickPrice && productData.conversionRate && !productData.price) {
+                    // 公式：投产比 × 点击单价 ÷ 点击转化率 = 产品售价
+                    const conversionRateDecimal = productData.conversionRate / 100; // 转换为小数
+                    if (conversionRateDecimal > 0) {
+                        productData.price = (productData.roi * productData.clickPrice) / conversionRateDecimal;
+                    }
+                }
+                
+                // 只有名称不为空才创建产品
+                if (productData.name && productData.name.trim()) {
+                    globalState.productCount++;
+                    const productId = `product_${globalState.productCount}`;
+                    
+                    globalState.products[productId] = {
+                        id: productId,
+                        name: productData.name.trim(),
+                        price: productData.price || 0,
+                        cost: productData.cost || 0,
+                        clickPrice: productData.clickPrice || 0,
+                        conversionRate: productData.conversionRate || 0,
+                        weight: 1,
+                        ...globalState.defaultParams
+                    };
+                    
+                    globalState.productOrder.push(productId);
+                    importedCount++;
+                }
+            });
+            
+            // 重新分配预算
+            distributeBudget();
+            
+            // 更新界面
+            renderProductList();
+            renderDataTable();
+            renderStats();
+            updateProductCount();
+            saveToStorage();
+            
+            closeImportModal();
+            alert(`成功导入 ${importedCount} 个产品！`);
+        }
+
+        // 指标配置功能
+        function openColumnConfig() {
+            renderColumnConfigList();
+            document.getElementById('columnConfigModal').style.display = 'flex';
+        }
+        
+        function closeColumnConfig() {
+            document.getElementById('columnConfigModal').style.display = 'none';
+        }
+        
+        function renderColumnConfigList() {
+            const container = document.getElementById('columnConfigList');
+            const columnDefinitions = [
+                { key: 'allocatedBudget', name: '推广预算', category: '基础' },
+                { key: 'totalActualProfit', name: '推广实际利润', category: '利润' },
+                { key: 'actualProfitPerOrder', name: '每单实际利润', category: '利润' },
+                { key: 'costPerOrder', name: '成交每单成本', category: '成本' },
+                { key: 'salesUnits', name: '推广销售单数', category: '销售' },
+                { key: 'salesRevenue', name: '推广销售额', category: '销售' },
+                { key: 'platformFee', name: '商城扣点', category: '费用' },
+                { key: 'shippingRate', name: '运费占比', category: '费用' },
+                { key: 'shippingCostPerOrder', name: '每单运费', category: '费用' },
+                { key: 'laborCost', name: '人员开销', category: '费用' },
+                { key: 'price', name: '产品售价', category: '基础' },
+                { key: 'cost', name: '产品成本', category: '成本' },
+                { key: 'clickPrice', name: '点击单价', category: '推广' },
+                { key: 'conversionRate', name: '转化率', category: '推广' },
+                { key: 'roi', name: '投产比', category: '推广' },
+                { key: 'actualPrice', name: '实际售价', category: '基础' },
+                { key: 'actualProfitRate', name: '实际利润率', category: '利润' },
+                { key: 'grossProfitRate', name: '售价利润率', category: '利润' },
+                { key: 'fixedCostRate', name: '保本利润率', category: '分析' },
+                { key: 'breakevenPriceIncrease', name: '涨价保本', category: '分析' },
+                { key: 'breakevenCostReduction', name: '降本保本', category: '分析' }
+            ];
+            
+            // 按类别分组
+            const categories = {};
+            columnDefinitions.forEach(col => {
+                if (!categories[col.category]) {
+                    categories[col.category] = [];
+                }
+                categories[col.category].push(col);
+            });
+            
+            let html = '';
+            Object.entries(categories).forEach(([category, columns]) => {
+                html += `
+                    <div style="margin-bottom: 20px;">
+                        <h5 style="color: var(--primary-color); margin-bottom: 12px; font-size: 14px; border-bottom: 1px solid var(--gray-200); padding-bottom: 4px;">
+                            📊 ${category}指标
+                        </h5>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px;">
+                `;
+                
+                columns.forEach(col => {
+                    const isChecked = globalState.columnConfig[col.key] ? 'checked' : '';
+                    html += `
+                        <label style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: white; border-radius: 6px; border: 1px solid var(--gray-200); cursor: pointer; transition: all 0.2s ease;" 
+                               onmouseover="this.style.borderColor='var(--primary-color)'" 
+                               onmouseout="this.style.borderColor='var(--gray-200)'">
+                            <input type="checkbox" ${isChecked} onchange="toggleColumnConfig('${col.key}')" 
+                                   style="margin: 0;">
+                            <span style="font-size: 13px; color: var(--gray-700);">${col.name}</span>
+                        </label>
+                    `;
+                });
+                
+                html += `
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function toggleColumnConfig(columnKey) {
+            globalState.columnConfig[columnKey] = !globalState.columnConfig[columnKey];
+            saveToStorage();
+        }
+        
+        function selectAllColumns() {
+            Object.keys(globalState.columnConfig).forEach(key => {
+                globalState.columnConfig[key] = true;
+            });
+            renderColumnConfigList();
+            saveToStorage();
+        }
+        
+        function selectNoneColumns() {
+            Object.keys(globalState.columnConfig).forEach(key => {
+                globalState.columnConfig[key] = false;
+            });
+            renderColumnConfigList();
+            saveToStorage();
+        }
+        
+        function selectCoreColumns() {
+            // 重置所有为false
+            Object.keys(globalState.columnConfig).forEach(key => {
+                globalState.columnConfig[key] = false;
+            });
+            
+            // 只选择核心指标
+            const coreColumns = ['allocatedBudget', 'totalActualProfit', 'actualProfitPerOrder', 'salesUnits', 'actualPrice', 'actualProfitRate'];
+            coreColumns.forEach(key => {
+                if (globalState.columnConfig.hasOwnProperty(key)) {
+                    globalState.columnConfig[key] = true;
+                }
+            });
+            
+            renderColumnConfigList();
+            saveToStorage();
+        }
+        
+        function selectProfitColumns() {
+            // 重置所有为false
+            Object.keys(globalState.columnConfig).forEach(key => {
+                globalState.columnConfig[key] = false;
+            });
+            
+            // 只选择利润分析相关指标
+            const profitColumns = ['totalActualProfit', 'actualProfitPerOrder', 'costPerOrder', 'actualPrice', 'cost', 'actualProfitRate', 'grossProfitRate', 'fixedCostRate', 'breakevenPriceIncrease', 'breakevenCostReduction'];
+            profitColumns.forEach(key => {
+                if (globalState.columnConfig.hasOwnProperty(key)) {
+                    globalState.columnConfig[key] = true;
+                }
+            });
+            
+            renderColumnConfigList();
+            saveToStorage();
+        }
+        
+        function applyColumnConfig() {
+            closeColumnConfig();
+            renderDataTable(); // 重新渲染表格以应用列配置
+            alert('指标配置已应用！');
+        }
+
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
