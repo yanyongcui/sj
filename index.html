@@ -56,6 +56,7 @@
             background-color: var(--gray-50);
             color: var(--gray-900);
             line-height: 1.6;
+            font-size: 15px; /* 增大基础字体 */
         }
 
         /* 顶部导航栏 */
@@ -162,7 +163,7 @@
         }
 
         .sidebar-title {
-            font-size: 16px;
+            font-size: 17px; /* 增大字体 */
             font-weight: 600;
             color: var(--gray-900);
             margin-bottom: 16px;
@@ -174,7 +175,7 @@
 
         .form-label {
             display: block;
-            font-size: 14px;
+            font-size: 15px; /* 增大字体 */
             font-weight: 500;
             color: var(--gray-700);
             margin-bottom: 6px;
@@ -182,10 +183,10 @@
 
         .form-input {
             width: 100%;
-            padding: 10px 12px;
+            padding: 12px 14px; /* 增大内边距 */
             border: 1px solid var(--gray-300);
             border-radius: var(--border-radius);
-            font-size: 14px;
+            font-size: 15px; /* 增大字体 */
             transition: border-color 0.2s ease, box-shadow 0.2s ease;
         }
 
@@ -257,6 +258,7 @@
         .product-name {
             font-weight: 600;
             color: var(--gray-900);
+            font-size: 15px; /* 增大产品名称字体 */
         }
 
         .product-status {
@@ -281,7 +283,7 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 8px;
-            font-size: 12px;
+            font-size: 13px; /* 增大字体 */
             color: var(--gray-600);
         }
 
@@ -348,7 +350,7 @@
         /* 固定首列的表格布局 */
         .table-wrapper {
             display: flex;
-            min-width: 2100px;
+            min-width: fit-content;
         }
 
         /* 固定列（产品名称） */
@@ -366,7 +368,7 @@
         /* 可滚动列 */
         .scrollable-columns {
             flex: 1;
-            min-width: 1950px;
+            min-width: calc(120px * 22); /* 根据实际列数动态调整 */
         }
 
         /* 自定义滚动条样式 */
@@ -455,14 +457,14 @@
                 80px; /* 操作 */
             gap: 1px;
             background: var(--gray-200);
-            height: 60px;
-            min-height: 60px;
+            height: 65px; /* 增大高度 */
+            min-height: 65px;
         }
         
         .fixed-column .table-row {
             display: block;
-            height: 60px;
-            min-height: 60px;
+            height: 65px; /* 增大高度 */
+            min-height: 65px;
         }
         
         .fixed-column .table-cell {
@@ -472,29 +474,29 @@
 
         .table-cell {
             background: white;
-            padding: 12px 8px;
+            padding: 14px 10px; /* 增大内边距 */
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: 60px;
+            min-height: 65px; /* 增大高度 */
             box-sizing: border-box;
         }
         
         /* 固定列单元格样式 */
         .fixed-column .table-cell {
-            height: 60px;
-            min-height: 60px;
-            max-height: 60px;
-            padding: 8px;
+            height: 65px; /* 增大高度 */
+            min-height: 65px;
+            max-height: 65px;
+            padding: 10px; /* 增大内边距 */
             border-bottom: 1px solid var(--gray-200);
         }
         
         /* 滚动列单元格样式 */
         .scrollable-columns .table-cell {
-            height: 60px;
-            min-height: 60px;
-            max-height: 60px;
+            height: 65px; /* 增大高度 */
+            min-height: 65px;
+            max-height: 65px;
             border-bottom: 1px solid var(--gray-200);
         }
 
@@ -502,11 +504,11 @@
             background: var(--gray-50);
             font-weight: 600;
             color: var(--gray-700);
-            font-size: 12px;
+            font-size: 14px; /* 从12px增大到14px */
             text-align: center;
-            height: 60px;
-            min-height: 60px;
-            max-height: 60px;
+            height: 65px; /* 增大高度 */
+            min-height: 65px;
+            max-height: 65px;
         }
         
         .table-cell.sortable {
@@ -530,21 +532,23 @@
         }
 
         .cell-label {
-            font-size: 10px;
+            font-size: 12px; /* 从10px增大到12px */
             color: var(--gray-500);
-            margin-bottom: 4px;
+            margin-bottom: 6px; /* 增大间距 */
             text-align: center;
+            font-weight: 500; /* 增加字体重量 */
         }
 
         .cell-input {
             width: 100%;
-            padding: 4px 6px;
+            padding: 6px 8px; /* 增大内边距 */
             border: 1px solid var(--gray-300);
             border-radius: 4px;
-            font-size: 12px;
+            font-size: 14px; /* 从12px增大到14px */
             text-align: center;
             box-sizing: border-box;
-            height: 26px;
+            height: 32px; /* 增大高度 */
+            font-weight: 500; /* 增加字体重量 */
         }
 
         .cell-input:focus {
@@ -553,12 +557,12 @@
         }
 
         .cell-value {
-            font-size: 12px;
+            font-size: 14px; /* 从12px增大到14px */
             font-weight: 600;
-            padding: 4px 6px;
+            padding: 6px 8px; /* 增大内边距 */
             border-radius: 4px;
             text-align: center;
-            min-width: 60px;
+            min-width: 70px; /* 增大最小宽度 */
         }
 
         .cell-value.positive {
@@ -2409,8 +2413,18 @@
             // 始终添加操作列
             headerHTML += '<div class="table-cell">操作</div>';
             
-            // 计算grid-template-columns
-            const columnWidths = visibleColumns.map(() => '120px').join(' ') + ' 80px'; // 最后80px是操作列
+            // 动态计算grid-template-columns - 根据可见列数量智能分配宽度
+            let columnWidths;
+            if (visibleColumns.length <= 5) {
+                // 当列数较少时，使用fr单位让列自动填充满整个空间
+                columnWidths = visibleColumns.map(() => '1fr').join(' ') + ' 100px'; // 操作列固定100px
+            } else if (visibleColumns.length <= 10) {
+                // 中等列数时，使用混合宽度
+                columnWidths = visibleColumns.map(() => '150px').join(' ') + ' 100px';
+            } else {
+                // 列数较多时，使用较小的固定宽度
+                columnWidths = visibleColumns.map(() => '120px').join(' ') + ' 80px';
+            }
             dynamicTableHeader.style.gridTemplateColumns = columnWidths;
             dynamicTableHeader.innerHTML = headerHTML;
 
@@ -2428,15 +2442,15 @@
                 fixedRow.className = fixedRowClass;
                 fixedRow.setAttribute('data-product-id', productId);
                 fixedRow.innerHTML = `
-                    <div style="display: flex; align-items: center; gap: 4px; width: 100%; height: 100%;">
+                    <div style="display: flex; align-items: center; gap: 6px; width: 100%; height: 100%;">
                         <input type="checkbox" class="product-checkbox" data-product-id="${productId}" 
-                               onchange="toggleProductSelection('${productId}')" style="margin: 0;">
+                               onchange="toggleProductSelection('${productId}')" style="margin: 0; transform: scale(1.2);">
                         <input type="text" class="cell-input" value="${product.name}" 
                                onchange="updateProduct('${productId}', 'name', this.value)" 
                                onclick="selectProduct('${productId}')"
-                               style="flex: 1; min-width: 50px; font-size: 11px; padding: 2px 4px;">
+                               style="flex: 1; min-width: 60px; font-size: 13px; padding: 4px 6px; font-weight: 500;">
                         <button class="btn btn-secondary btn-icon" onclick="deleteProduct('${productId}')" 
-                                title="删除" style="padding: 2px; font-size: 8px; width: 18px; height: 18px; min-width: 18px;">🗑️</button>
+                                title="删除" style="padding: 3px; font-size: 10px; width: 22px; height: 22px; min-width: 22px;">🗑️</button>
                     </div>
                 `;
                 fixedColumnBody.appendChild(fixedRow);
@@ -2461,7 +2475,7 @@
                 cellsHTML += `
                     <div class="table-cell">
                         <div class="cell-label">操作</div>
-                        <div class="cell-value neutral" style="font-size: 10px;">左侧删除</div>
+                        <div class="cell-value neutral" style="font-size: 12px; opacity: 0.7;">左侧删除</div>
                     </div>
                 `;
                 
