@@ -1107,6 +1107,7 @@
                 <h1 class="content-title">数据分析面板</h1>
                 <p class="content-subtitle">实时监控产品利润表现，优化投资回报率</p>
                 <div class="content-actions">
+                    <button class="btn btn-primary" id="sortModeBtn" onclick="toggleSortMode()">🔄 自动排序</button>
                     <button class="btn btn-secondary" onclick="refreshData()">🔄 刷新数据</button>
                     <button class="btn btn-secondary" onclick="importTableData()">📊 导入表格</button>
                     <button class="btn btn-secondary" onclick="importData()">📂 导入数据</button>
@@ -1132,9 +1133,9 @@
                             <!-- 固定首列 -->
                             <div class="fixed-column">
                                 <div class="table-header">
-                                    <div class="table-cell">
+                                    <div class="table-cell sortable" onclick="sortTable('name')" style="cursor: pointer;">
                                         <input type="checkbox" id="selectAll" onchange="toggleSelectAll()" style="margin-right: 6px;">
-                                        产品名称
+                                        产品名称 <span class="sort-icon" id="sort-name">⇅</span>
                                     </div>
                                 </div>
                                 <div id="fixedColumnBody">
@@ -1383,13 +1384,15 @@
             selectedProduct: null,
             productCount: 0,
             // 排序状态
-            sortField: null,
-            sortDirection: 'desc',  // 'asc' 或 'desc'
+            sortField: 'name',  // 默认按名称排序
+            sortDirection: 'asc',  // 'asc' 或 'desc'
+            sortMode: 'auto',  // 'auto' 或 'manual'
             // 批量选择状态
             selectedProducts: new Set(),
             selectAll: false,
             // 指标配置
             columnConfig: {
+                time: true,  // 新增时间列
                 allocatedBudget: true,
                 totalActualProfit: true,
                 actualProfitPerOrder: true,
@@ -1506,11 +1509,16 @@
             console.log('开始初始化应用...');
             try {
                 loadFromStorage();
+                // 应用初始排序（按产品名称）
+                if (globalState.sortMode === 'auto') {
+                    applySorting();
+                }
                 renderProductList();
                 renderDataTable();
                 renderStats();
                 updateProductCount();
                 initScrollHint();
+                updateSortModeUI();
                 console.log('应用初始化完成', globalState);
             } catch (error) {
                 console.error('应用初始化失败:', error);
@@ -1573,6 +1581,7 @@
                 globalState.productCount++;
                 const productId = `product_${globalState.productCount}`;
                 
+                const currentTime = new Date().toISOString();
                 globalState.products[productId] = {
                     id: productId,
                     name: `产品 ${globalState.productCount}`,
@@ -1581,6 +1590,9 @@
                     clickPrice: 0,
                     conversionRate: 0,
                     weight: 1, // 用于预算分配
+                    // 时间字段
+                    uploadTime: currentTime,
+                    statisticTime: null, // 统计时间，默认为空
                     // 继承默认参数
                     ...globalState.defaultParams
                 };
@@ -1626,32 +1638,70 @@
 
         // 表格排序功能
         function sortTable(field) {
+            // 只有在自动排序模式下才允许排序
+            if (globalState.sortMode !== 'auto') {
+                alert('当前为手动排序模式，请先切换到自动排序模式！');
+                return;
+            }
+            
             // 如果点击的是当前排序字段，则切换排序方向
             if (globalState.sortField === field) {
                 globalState.sortDirection = globalState.sortDirection === 'desc' ? 'asc' : 'desc';
             } else {
                 globalState.sortField = field;
-                globalState.sortDirection = 'desc'; // 默认降序
+                globalState.sortDirection = field === 'name' || field === 'time' ? 'asc' : 'desc'; // 名称和时间默认升序，其他降序
             }
             
-            // 对产品进行排序
+            applySorting();
+            saveToStorage();
+        }
+        
+        // 应用排序
+        function applySorting() {
+            if (globalState.sortMode !== 'auto') return;
+            
             globalState.productOrder.sort((aId, bId) => {
                 const productA = globalState.products[aId];
                 const productB = globalState.products[bId];
-                const calculatedA = calculateProductData(productA);
-                const calculatedB = calculateProductData(productB);
                 
-                let valueA = calculatedA[field];
-                let valueB = calculatedB[field];
+                let valueA, valueB;
                 
-                // 确保数值比较
-                valueA = typeof valueA === 'number' ? valueA : 0;
-                valueB = typeof valueB === 'number' ? valueB : 0;
-                
-                if (globalState.sortDirection === 'desc') {
-                    return valueB - valueA;
+                if (globalState.sortField === 'name') {
+                    valueA = productA.name || '';
+                    valueB = productB.name || '';
+                    // 字符串比较
+                    if (globalState.sortDirection === 'desc') {
+                        return valueB.localeCompare(valueA);
+                    } else {
+                        return valueA.localeCompare(valueB);
+                    }
+                } else if (globalState.sortField === 'time') {
+                    // 时间字段排序：优先显示统计时间，没有则显示上传时间
+                    valueA = productA.statisticTime || productA.uploadTime || '';
+                    valueB = productB.statisticTime || productB.uploadTime || '';
+                    // 时间字符串比较
+                    if (globalState.sortDirection === 'desc') {
+                        return valueB.localeCompare(valueA);
+                    } else {
+                        return valueA.localeCompare(valueB);
+                    }
                 } else {
-                    return valueA - valueB;
+                    // 数值字段排序
+                    const calculatedA = calculateProductData(productA);
+                    const calculatedB = calculateProductData(productB);
+                    
+                    valueA = calculatedA[globalState.sortField] !== undefined ? calculatedA[globalState.sortField] : productA[globalState.sortField];
+                    valueB = calculatedB[globalState.sortField] !== undefined ? calculatedB[globalState.sortField] : productB[globalState.sortField];
+                    
+                    // 确保数值比较
+                    valueA = typeof valueA === 'number' ? valueA : 0;
+                    valueB = typeof valueB === 'number' ? valueB : 0;
+                    
+                    if (globalState.sortDirection === 'desc') {
+                        return valueB - valueA;
+                    } else {
+                        return valueA - valueB;
+                    }
                 }
             });
             
@@ -1661,7 +1711,6 @@
             // 重新渲染表格
             renderDataTable();
             renderProductList();
-            saveToStorage();
         }
         
         // 更新排序图标
@@ -1680,6 +1729,134 @@
                     activeIcon.textContent = globalState.sortDirection === 'desc' ? '↓' : '↑';
                 }
             }
+        }
+        
+        // 切换排序模式
+        function toggleSortMode() {
+            globalState.sortMode = globalState.sortMode === 'auto' ? 'manual' : 'auto';
+            
+            if (globalState.sortMode === 'auto') {
+                // 切换到自动排序时应用当前排序
+                applySorting();
+            }
+            
+            updateSortModeUI();
+            saveToStorage();
+        }
+        
+        // 更新排序模式UI
+        function updateSortModeUI() {
+            const sortModeBtn = document.getElementById('sortModeBtn');
+            if (sortModeBtn) {
+                if (globalState.sortMode === 'auto') {
+                    sortModeBtn.textContent = '🔄 自动排序';
+                    sortModeBtn.className = 'btn btn-primary';
+                    sortModeBtn.title = '当前为自动排序模式，点击切换为手动排序';
+                } else {
+                    sortModeBtn.textContent = '✋ 手动排序';
+                    sortModeBtn.className = 'btn btn-secondary';
+                    sortModeBtn.title = '当前为手动排序模式，点击切换为自动排序';
+                }
+            }
+            
+            // 更新表头排序提示
+            const sortableHeaders = document.querySelectorAll('.table-cell.sortable');
+            sortableHeaders.forEach(header => {
+                if (globalState.sortMode === 'auto') {
+                    header.style.cursor = 'pointer';
+                    header.style.opacity = '1';
+                } else {
+                    header.style.cursor = 'not-allowed';
+                    header.style.opacity = '0.6';
+                }
+            });
+            
+            // 重新渲染表格以更新拖拽状态
+            renderDataTable();
+        }
+        
+        // 拖拽相关的全局变量
+        let draggedElement = null;
+        let draggedProductId = null;
+        
+        // 拖拽开始
+        function handleDragStart(e) {
+            if (globalState.sortMode !== 'manual') {
+                e.preventDefault();
+                return;
+            }
+            
+            draggedElement = e.target;
+            draggedProductId = e.target.getAttribute('data-product-id');
+            e.target.style.opacity = '0.5';
+            
+            // 设置拖拽数据
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', e.target.outerHTML);
+        }
+        
+        // 拖拽悬停
+        function handleDragOver(e) {
+            if (globalState.sortMode !== 'manual') return;
+            
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            
+            // 添加视觉反馈
+            const currentElement = e.currentTarget;
+            if (currentElement !== draggedElement) {
+                currentElement.style.borderTop = '2px solid var(--primary-color)';
+            }
+        }
+        
+        // 拖拽放置
+        function handleDrop(e) {
+            if (globalState.sortMode !== 'manual') return;
+            
+            e.preventDefault();
+            
+            const dropTarget = e.currentTarget;
+            const dropTargetProductId = dropTarget.getAttribute('data-product-id');
+            
+            // 清除视觉反馈
+            dropTarget.style.borderTop = '';
+            
+            if (draggedProductId && dropTargetProductId && draggedProductId !== dropTargetProductId) {
+                // 重新排列产品顺序
+                const draggedIndex = globalState.productOrder.indexOf(draggedProductId);
+                const dropIndex = globalState.productOrder.indexOf(dropTargetProductId);
+                
+                if (draggedIndex !== -1 && dropIndex !== -1) {
+                    // 从原位置移除
+                    globalState.productOrder.splice(draggedIndex, 1);
+                    
+                    // 计算新的插入位置
+                    const newDropIndex = draggedIndex < dropIndex ? dropIndex : dropIndex + 1;
+                    
+                    // 插入到新位置
+                    globalState.productOrder.splice(newDropIndex, 0, draggedProductId);
+                    
+                    // 重新渲染
+                    renderDataTable();
+                    renderProductList();
+                    saveToStorage();
+                }
+            }
+        }
+        
+        // 拖拽结束
+        function handleDragEnd(e) {
+            if (draggedElement) {
+                draggedElement.style.opacity = '';
+            }
+            
+            // 清除所有视觉反馈
+            document.querySelectorAll('.table-cell').forEach(element => {
+                element.style.borderTop = '';
+            });
+            
+            draggedElement = null;
+            draggedProductId = null;
         }
         
         // 批量选择和删除功能
@@ -2053,6 +2230,8 @@
         // 生成计算公式说明的工具提示文本
         function getTooltipText(field, product, calculated) {
             const tooltips = {
+                time: `时间信息\n\n显示规则：\n• 优先显示统计时间（如果有）\n• 没有统计时间则显示上传时间\n\n当前显示：${product.statisticTime ? '统计时间' : '上传时间'}\n时间：${product.statisticTime || product.uploadTime || '无'}`,
+                
                 allocatedBudget: "推广预算\n\n根据预算分配方式确定：\n• 每店推广预算总额：每个产品使用全部预算\n• 平均分配：总预算 ÷ 产品数量\n• 按权重分配：总预算 × (产品权重 ÷ 总权重)\n• 手动分配：用户自定义设置",
                 
                 totalActualProfit: `推广实际利润 = 推广销售单数 × 每单实际利润\n\n计算过程：\n销售单数：${calculated.salesUnits.toFixed(0)} 单\n每单实际利润：¥${calculated.actualProfitPerOrder.toFixed(2)}\n实际利润：${calculated.salesUnits.toFixed(0)} × ${calculated.actualProfitPerOrder.toFixed(2)} = ¥${calculated.totalActualProfit.toFixed(2)}`,
@@ -2148,6 +2327,15 @@
             if (globalState.products[productId]) {
                 if (field === 'name') {
                     globalState.products[productId][field] = value;
+                } else if (field === 'time') {
+                    // 特殊处理时间字段
+                    if (value) {
+                        // 将datetime-local格式转换为ISO字符串
+                        const dateObj = new Date(value);
+                        globalState.products[productId].statisticTime = dateObj.toISOString();
+                    } else {
+                        globalState.products[productId].statisticTime = null;
+                    }
                 } else {
                     const numValue = parseFloat(value) || 0;
                     globalState.products[productId][field] = numValue;
@@ -2160,7 +2348,14 @@
                         calculateShippingFields(productId, 'shippingRate', globalState.products[productId].shippingRate);
                     }
                 }
-                distributeBudget();
+                
+                // 如果修改了推广预算，确保在手动分配模式下
+                if (field === 'allocatedBudget' && globalState.budgetAllocation === 'manual') {
+                    // 手动分配模式下允许直接修改预算
+                } else if (field !== 'allocatedBudget') {
+                    distributeBudget();
+                }
+                
                 renderProductList();
                 renderDataTable();
                 renderStats();
@@ -2370,7 +2565,8 @@
             
             // 定义所有可用的列配置
             const allColumnConfigs = [
-                { key: 'allocatedBudget', name: '推广预算', sortable: false, type: 'display' },
+                { key: 'time', name: '时间', sortable: true, type: 'input' },  // 时间列改为可编辑
+                { key: 'allocatedBudget', name: '推广预算', sortable: false, type: 'input' },  // 推广预算改为可编辑
                 { key: 'totalActualProfit', name: '推广实际利润', sortable: true, type: 'display' },
                 { key: 'actualProfitPerOrder', name: '每单实际利润', sortable: true, type: 'display' },
                 { key: 'costPerOrder', name: '成交每单成本', sortable: true, type: 'display' },
@@ -2441,8 +2637,20 @@
                 if (isActive) fixedRowClass += ' fixed-row-active';
                 fixedRow.className = fixedRowClass;
                 fixedRow.setAttribute('data-product-id', productId);
+                
+                // 添加拖拽属性（仅在手动排序模式下）
+                if (globalState.sortMode === 'manual') {
+                    fixedRow.draggable = true;
+                    fixedRow.style.cursor = 'move';
+                    fixedRow.addEventListener('dragstart', handleDragStart);
+                    fixedRow.addEventListener('dragover', handleDragOver);
+                    fixedRow.addEventListener('drop', handleDrop);
+                    fixedRow.addEventListener('dragend', handleDragEnd);
+                }
+                
                 fixedRow.innerHTML = `
                     <div style="display: flex; align-items: center; gap: 6px; width: 100%; height: 100%;">
+                        ${globalState.sortMode === 'manual' ? '<span style="color: var(--gray-400); font-size: 12px; cursor: move;">⋮⋮</span>' : ''}
                         <input type="checkbox" class="product-checkbox" data-product-id="${productId}" 
                                onchange="toggleProductSelection('${productId}')" style="margin: 0; transform: scale(1.2);">
                         <input type="text" class="cell-input" value="${product.name}" 
@@ -2513,6 +2721,35 @@
                 let label = columnConfig.name;
                 
                 switch (key) {
+                    case 'time':
+                        // 时间字段：编辑统计时间
+                        let timeValue = '';
+                        if (product.statisticTime) {
+                            // 转换ISO时间为datetime-local格式
+                            const dateObj = new Date(product.statisticTime);
+                            const offset = dateObj.getTimezoneOffset() * 60000;
+                            const localISOTime = new Date(dateObj.getTime() - offset).toISOString();
+                            timeValue = localISOTime.slice(0, 16); // 截取到分钟
+                        }
+                        inputValue = timeValue;
+                        inputType = 'datetime-local';
+                        label = '统计时间';
+                        step = '';
+                        break;
+                    case 'allocatedBudget':
+                        // 推广预算：只有在手动分配模式下才可编辑
+                        inputValue = product.allocatedBudget || 0;
+                        if (globalState.budgetAllocation !== 'manual') {
+                            // 非手动分配模式下显示为只读
+                            return `
+                                <div class="table-cell">
+                                    <div class="cell-label">${label}</div>
+                                    <div class="cell-value neutral">¥${(product.allocatedBudget || 0).toFixed(2)}</div>
+                                    <small style="color: var(--gray-500); font-size: 10px;">自动分配</small>
+                                </div>
+                            `;
+                        }
+                        break;
                     case 'platformFee':
                     case 'shippingRate':
                     case 'laborCost':
@@ -2542,6 +2779,23 @@
                 let displayValue, valueClass = 'neutral';
                 
                 switch (key) {
+                    case 'time':
+                        // 时间列显示逻辑：优先显示统计时间，没有则显示上传时间
+                        const timeToShow = product.statisticTime || product.uploadTime;
+                        if (timeToShow) {
+                            const timeObj = new Date(timeToShow);
+                            displayValue = timeObj.toLocaleString('zh-CN', {
+                                year: 'numeric',
+                                month: '2-digit',
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            });
+                            valueClass = product.statisticTime ? 'positive' : 'neutral';  // 统计时间显示绿色，上传时间显示灰色
+                        } else {
+                            displayValue = '-';
+                        }
+                        break;
                     case 'allocatedBudget':
                         displayValue = `¥${(product.allocatedBudget || 0).toFixed(2)}`;
                         break;
@@ -2715,6 +2969,7 @@
                     // 确保columnConfig存在且包含所有字段
                     if (!globalState.columnConfig) {
                         globalState.columnConfig = {
+                            time: true,  // 新增时间列
                             allocatedBudget: true,
                             totalActualProfit: true,
                             actualProfitPerOrder: true,
@@ -2740,6 +2995,7 @@
                     } else {
                         // 确保现有配置包含所有新字段
                         const defaultColumnConfig = {
+                            time: true,  // 新增时间列
                             allocatedBudget: true,
                             totalActualProfit: true,
                             actualProfitPerOrder: true,
@@ -2769,6 +3025,24 @@
                                 globalState.columnConfig[key] = defaultColumnConfig[key];
                             }
                         });
+                    }
+                    
+                    // 确保现有产品具有时间字段
+                    Object.keys(globalState.products).forEach(productId => {
+                        const product = globalState.products[productId];
+                        if (!product.uploadTime) {
+                            // 为没有时间字段的现有产品添加上传时间
+                            product.uploadTime = new Date().toISOString();
+                        }
+                        if (!product.statisticTime) {
+                            // 确保statisticTime字段存在
+                            product.statisticTime = null;
+                        }
+                    });
+                    
+                    // 确保排序模式字段存在
+                    if (!globalState.sortMode) {
+                        globalState.sortMode = 'auto';
                     }
                     
                     // 更新UI
@@ -2810,11 +3084,13 @@
                 productOrder: [],
                 selectedProduct: null,
                 productCount: 0,
-                sortField: null,
-                sortDirection: 'desc',
+                sortField: 'name',
+                sortDirection: 'asc',
+                sortMode: 'auto',
                 selectedProducts: new Set(),
                 selectAll: false,
                 columnConfig: {
+                    time: true,  // 新增时间列
                     allocatedBudget: true,
                     totalActualProfit: true,
                     actualProfitPerOrder: true,
@@ -3473,6 +3749,7 @@
                 if (productData.name && productData.name.trim()) {
                     globalState.productCount++;
                     const productId = `product_${globalState.productCount}`;
+                    const currentTime = new Date().toISOString();
                     
                     globalState.products[productId] = {
                         id: productId,
@@ -3482,6 +3759,9 @@
                         clickPrice: productData.clickPrice || 0,
                         conversionRate: productData.conversionRate || 0,
                         weight: 1,
+                        // 时间字段
+                        uploadTime: currentTime,
+                        statisticTime: currentTime, // 导入的数据使用上传时间作为统计时间
                         ...globalState.defaultParams
                     };
                     
@@ -3517,6 +3797,7 @@
         function renderColumnConfigList() {
             const container = document.getElementById('columnConfigList');
             const columnDefinitions = [
+                { key: 'time', name: '时间', category: '基础' },  // 新增时间列
                 { key: 'allocatedBudget', name: '推广预算', category: '基础' },
                 { key: 'totalActualProfit', name: '推广实际利润', category: '利润' },
                 { key: 'actualProfitPerOrder', name: '每单实际利润', category: '利润' },
